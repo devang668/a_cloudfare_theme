@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>我的博客 - 首页</title>
+    <meta name="keywords" content="博客,技术,分享" />
+    <meta name="description" content="这是一个技术博客，分享编程和开发相关的内容。" />
+    
+    <!-- 引入外部资源 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu%3A400%2C700&amp;subset=latin%2Clatin-ext" type="text/css" media="all" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/WordPress/WordPress@5.5.3/wp-includes/css/dist/block-library/style.min.css?ver=5.6" type="text/css" media="all" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/wp/themes/iconic-one/2.1.8/custom.min.css?ver=5.6" type="text/css" media="all" />
+    <link rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.3.2/styles/tomorrow-night-bright.min.css">
+    <script src='https://cdn.staticfile.org/highlight.js/10.3.2/highlight.min.js'></script>
+    
+    <!-- 自定义样式 -->
+    <style type="text/css">
+        /* 全局响应式设计优化 */
+        /* 移动端优先设计 */
+        @media (max-width: 768px) {
+          #secondary { display:none !important; }
+          #menu-top {
+            display: none !important;
+          }
+          /* 添加汉堡菜单按钮 */
+          .menu-toggle {
+            display: block;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+          }
+          .site-content {
+            float: none;
+            width: 95%;
+            padding: 20px 2.5% 0;
+            margin: 0 auto;
+          }
+          .site-description {
+            display: none !important;
+          }
+          .io-title-description {
+            display: inline-block;
+            margin: 17px 0;
+            padding: 0px 0;
+            float: none;
+            font-size: 16px;
+          }
+          .wrapper {
+            border: 1px solid #16a1e7 !important;
+            padding: 0 10px;
+          }
+          .entry-header h1 {
+            font-size: 22px !important;
+            line-height: 1.3 !important;
+          }
+          .below-title-meta {
+            font-size: 14px;
+          }
+          .entry-content {
+            font-size: 16px;
+            line-height: 1.6;
+          }
+          .entry-content img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          /* 优化文章内容区域 */
+          .entry-content {
+            padding: 15px 0;
+          }
+          /* 优化表格显示 */
+          table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          /* 优化代码块显示 */
+          pre {
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+          }
+          code {
+            font-size: 14px;
+          }
+          /* 优化文章列表卡片 */
+          .post {
+            margin-bottom: 20px !important;
+            padding: 15px !important;
+          }
+          /* 优化分页显示 */
+          .nav-previous, .nav-next {
+            display: block !important;
+            text-align: center !important;
+            margin: 10px 0 !important;
+          }
+        }
+
+        /* 平板和桌面端优化 */
+        @media (min-width: 769px) {
+          .menu-toggle {
+            display: none;
+          }
+          /* 优化内容和侧边栏布局 */
+          #main.wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+          }
+          #primary {
+            flex: 0 0 calc(75% - 20px);
+            margin-right: 20px;
+          }
+          #secondary {
+            flex: 0 0 25%;
+          }
+          /* 优化文章标题显示 */
+          .entry-header h1 {
+            font-size: 26px !important;
+            line-height: 1.3 !important;
+            margin-bottom: 20px;
+          }
+          /* 优化文章内容显示 */
+          .entry-content {
+            font-size: 16px;
+            line-height: 1.7;
+          }
+          /* 优化代码块 */
+          pre {
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+          }
+          /* 优化表格 */
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+          }
+          th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+          }
+          th {
+            background-color: #f8f9fa;
+          }
+          /* 优化文章列表卡片 */
+          .post {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+          }
+          .post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+          }
+          /* 优化分页导航 */
+          .nav-links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+        }
+
+        /* 通用样式优化 */
+        body {
+          font-family: 'Microsoft YaHei', Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #f5f7fa;
+        }
+
+        /* 页面容器优化 */
+        #page {
+          max-width: 1200px;
+          margin: 0 auto;
+          background-color: white;
+          box-shadow: 0 0 20px rgba(0,0,0,0.1);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        /* 头部优化 - 云朵状渐变效果 */
+        .site-header {
+          background: linear-gradient(135deg, #87CEEB 0%, #B0E2FF 50%, #87CEEB 100%);
+          background-size: 200% 200%;
+          color: #2c3e50;
+          padding: 20px 0;
+          border-bottom: 3px solid #3498db;
+          animation: cloudFloat 15s ease-in-out infinite;
+        }
+
+        /* 云朵浮动动画 */
+        @keyframes cloudFloat {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        /* 调整标题颜色以适应新背景 */
+        .io-title-description a {
+          color: #2c3e50 !important;
+        }
+
+        .site-description {
+          color: #34495e !important;
+        }
+
+        .io-title-description a {
+          color: white;
+          text-decoration: none;
+          font-weight: bold;
+          font-size: 24px;
+        }
+
+        .site-description {
+          color: #ecf0f1;
+          font-size: 14px;
+        }
+
+        /* 导航菜单优化 */
+        .themonic-nav {
+          background-color: #34495e;
+          padding: 10px 0;
+        }
+
+        .nav-menu {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          text-align: center;
+        }
+
+        .nav-menu li {
+          display: inline-block;
+          margin: 0 10px;
+        }
+
+        .nav-menu li a {
+          color: white;
+          text-decoration: none;
+          padding: 8px 15px;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+        }
+
+        .nav-menu li a:hover {
+          background-color: #3498db;
+          color: white;
+        }
+
+        /* 文章内容优化 */
+        .entry-content {
+          padding: 20px 0;
+        }
+
+        .entry-content h2,
+        .entry-content h3,
+        .entry-content h4,
+        .entry-content h5,
+        .entry-content h6 {
+          color: #2c3e50;
+          margin-top: 30px;
+          margin-bottom: 15px;
+        }
+
+        .entry-content p {
+          margin-bottom: 15px;
+        }
+
+        .entry-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 4px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 侧边栏优化 */
+        .widget-area {
+          padding: 20px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+        }
+
+        .widget-title {
+          color: #2c3e50;
+          font-weight: bold;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #3498db;
+        }
+
+        .widget ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .widget li {
+          margin-bottom: 10px;
+        }
+
+        .widget li a {
+          color: #3498db;
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        .widget li a:hover {
+          color: #2980b9;
+          text-decoration: underline;
+        }
+
+        /* 页脚优化 */
+        .site-wordpress {
+          background-color: #2c3e50;
+          color: white;
+          padding: 20px 0;
+          text-align: center;
+          border-top: 3px solid #3498db;
+        }
+
+        /* 文章列表优化 */
+        .post {
+          margin-bottom: 30px;
+          padding: 20px;
+          background-color: white;
+          border-radius: 4px;
+          box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+          border: 1px solid #e9ecef;
+        }
+
+        .entry-header .entry-title a {
+          color: #2c3e50;
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        .entry-header .entry-title a:hover {
+          color: #3498db;
+        }
+
+        /* 阅读更多按钮优化 */
+        .more-link {
+          display: inline-block;
+          margin-top: 15px;
+          padding: 8px 15px;
+          background-color: #3498db;
+          color: white;
+          text-decoration: none;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+        }
+
+        .more-link:hover {
+          background-color: #2980b9;
+          color: white;
+          text-decoration: none;
+          transform: translateY(-2px);
+        }
+
+        /* 分页导航优化 */
+        .nav-links {
+          margin: 30px 0;
+          padding: 20px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+          text-align: center;
+        }
+
+        .nav-previous a, .nav-next a {
+          display: inline-block;
+          padding: 10px 20px;
+          background-color: #3498db;
+          color: white;
+          text-decoration: none;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+        }
+
+        .nav-previous a:hover, .nav-next a:hover {
+          background-color: #2980b9;
+          color: white;
+          text-decoration: none;
+          transform: translateY(-2px);
+        }
+
+        /* 分类标签优化 */
+        .cat-links a,
+        .tags-links a {
+          display: inline-block;
+          margin: 5px;
+          padding: 5px 10px;
+          background-color: #ecf0f1;
+          border-radius: 4px;
+          text-decoration: none;
+          transition: all 0.3s ease;
+        }
+
+        .cat-links a:hover,
+        .tags-links a:hover {
+          background-color: #3498db;
+          color: white !important;
+        }
+
+        /* 文章元数据优化 */
+        .below-title-meta {
+          color: #666;
+          font-size: 14px;
+          margin-bottom: 15px;
+        }
+
+        /* 标签云优化 */
+        .tagcloud {
+          margin-top: 10px;
+        }
+
+        .tag-cloud-link {
+          display: inline-block;
+          margin: 5px;
+          padding: 5px 10px;
+          background-color: #ecf0f1;
+          border-radius: 4px;
+          text-decoration: none;
+          transition: all 0.3s ease;
+        }
+
+        .tag-cloud-link:hover {
+          background-color: #3498db;
+          color: white !important;
+        }
+        
+        /* Markdown样式 */
+        .gfm-task-list { border: 1px solid transparent; list-style-type: none; }
+        .gfm-task-list input { margin-right: 10px !important; }
+        .copy-button { cursor: pointer; border: 0; font-size: 12px; text-transform: uppercase; font-weight: 500; padding: 3px 6px 3px 6px; background-color: rgba(255, 255, 255, 0.6); position: absolute; overflow: hidden; top: 5px; right: 5px; border-radius: 3px; }
+        .copy-button:before { content: ""; display: inline-block; width: 16px; height: 16px; margin-right: 3px; background-size: contain; background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='16px' height='16px' viewBox='888 888 16 16' enable-background='new 888 888 16 16' xml:space='preserve'%3E %3Cpath fill='%23333333' d='M903.143,891.429c0.238,0,0.44,0.083,0.607,0.25c0.167,0.167,0.25,0.369,0.25,0.607v10.857 c0,0.238-0.083,0.44-0.25,0.607s-0.369,0.25-0.607,0.25h-8.571c-0.238,0-0.44-0.083-0.607-0.25s-0.25-0.369-0.25-0.607v-2.571 h-4.857c-0.238,0-0.44-0.083-0.607-0.25s-0.25-0.369-0.25-0.607v-6c0-0.238,0.06-0.5,0.179-0.786s0.262-0.512,0.428-0.679 l3.643-3.643c0.167-0.167,0.393-0.309,0.679-0.428s0.547-0.179,0.786-0.179h3.714c0.238,0,0.44,0.083,0.607,0.25 c0.166,0.167,0.25,0.369,0.25,0.607v2.929c0.404-0.238,0.785-0.357,1.143-0.357H903.143z M898.286,893.331l-2.67,2.669h2.67V893.331 z M892.571,889.902l-2.669,2.669h2.669V889.902z M894.321,895.679l2.821-2.822v-3.714h-3.428v3.714c0,0.238-0.083,0.441-0.25,0.607 s-0.369,0.25-0.607,0.25h-3.714v5.714h4.571v-2.286c0-0.238,0.06-0.5,0.179-0.786C894.012,896.071,894.155,895.845,894.321,895.679z M902.857,902.857v-10.286h-3.429v3.714c0,0.238-0.083,0.441-0.25,0.607c-0.167,0.167-0.369,0.25-0.607,0.25h-3.714v5.715H902.857z' /%3E %3C/svg%3E"); background-repeat: no-repeat; position: relative; top: 3px; }
+        pre { position: relative; }
+        pre:hover .copy-button { background-color: rgba(255, 255, 255, 0.9); }
+        
+        /* 图片表情样式 */
+        img.wp-smiley, img.emoji { display: inline !important; border: none !important; box-shadow: none !important; height: 1em !important; width: 1em !important; margin: 0 .07em !important; vertical-align: -0.1em !important; background: none !important; padding: 0 !important; }
+    </style>
+</head>
+<body class="home blog logged-in custom-font-enabled single-author hfeed">
+    <!-- 移动端菜单按钮 -->
+    <button class="menu-toggle" aria-controls="menu-top" aria-expanded="false">菜单</button>
+    
+    <div id="page" class="site">
+        <header id="masthead" class="site-header" role="banner">
+            <div class="io-title-description">
+                <a href="/" title="我的博客" rel="home">我的博客</a>
+                <br />
+                <a class="site-description">分享编程和技术的博客</a>
+            </div>
+            <nav id="site-navigation" class="themonic-nav" role="navigation">
+                <a class="assistive-text" href="#main" title="Skip to content">Skip to content</a>
+                <ul id="menu-top" class="nav-menu">
+                    <li id="menu-item-211" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-211">
+                        <a href="#">首页</a>
+                    </li>
+                    <li id="menu-item-212" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-212">
+                        <a href="#">技术</a>
+                    </li>
+                    <li id="menu-item-213" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-213">
+                        <a href="#">生活</a>
+                    </li>
+                    <li id="menu-item-214" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-214">
+                        <a href="#">关于我</a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- #site-navigation -->
+            <div class="clear"></div>
+        </header>
+        <!-- #masthead -->
+        <div id="main" class="wrapper">
+            <div id="primary" class="site-content">
+                <div id="content" role="main">
+                    <!-- 文章列表 -->
+                    <article id="post-1" class="post-1 post type-post status-publish format-standard has-post-thumbnail hentry category-4">
+                        <header class="entry-header">
+                            <h2 class="entry-title">
+                                <a href="#" title="如何搭建一个Cloudflare Workers博客" rel="如何搭建一个Cloudflare Workers博客">如何搭建一个Cloudflare Workers博客</a></h2>
+                        </header>
+                        <!-- .entry-header -->
+                        <div class="entry-summary">
+                            <div class="excerpt-thumb">
+                                <a href="#" title="如何搭建一个Cloudflare Workers博客" rel="bookmark">
+                                    <img width="200" height="112" src="https://images.unsplash.com/photo-1516110833967-1c651d3495c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&h=112&q=80" class="alignleft wp-post-image" alt="" loading="lazy" /></a>
+                            </div>
+                            <p>Cloudflare Workers是一个强大的边缘计算平台，可以用来搭建高性能的博客系统。本文将介绍如何使用Cloudflare Workers搭建一个简单但功能完整的博客，包括如何部署、配置和优化你的博客站点。我们将使用JavaScript进行开发，利用Cloudflare Workers的全球分布式网络来提供快速的访问体验。...
+                                <span class="read-more">
+                                    <a href="#">继续阅读 &raquo;</a></span>
+                            </p>
+                        </div>
+                        <!-- .entry-summary -->
+                        <footer class="entry-meta">
+                            <span>分类:
+                                <a href="#" rel="category tag">技术</a>
+                                <a href="#" rel="category tag">Cloudflare</a>
+                            </span>
+                            <span>标签：
+                                <a href="#" rel="tag">Cloudflare</a>
+                                <a href="#" rel="tag">博客</a>
+                                <a href="#" rel="tag">Workers</a>
+                            </span>
+                            <span class="alignright">2023-06-15</span></footer>
+                        <!-- .entry-meta -->
+                    </article>
+                     
+                    <article id="post-2" class="post-2 post type-post status-publish format-standard has-post-thumbnail hentry category-4">
+                        <header class="entry-header">
+                            <h2 class="entry-title">
+                                <a href="#" title="前端性能优化实战技巧" rel="前端性能优化实战技巧">前端性能优化实战技巧</a></h2>
+                        </header>
+                        <!-- .entry-header -->
+                        <div class="entry-summary">
+                            <div class="excerpt-thumb">
+                                <a href="#" title="前端性能优化实战技巧" rel="bookmark">
+                                    <img width="200" height="112" src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&h=112&q=80" class="alignleft wp-post-image" alt="" loading="lazy" /></a>
+                            </div>
+                            <p>前端性能优化是提升用户体验的关键。本文将分享一系列实用的前端性能优化技巧，包括资源加载优化、代码优化、渲染优化等方面。通过这些技巧，你可以显著提升网站的加载速度和运行效率，为用户提供更加流畅的浏览体验。...
+                                <span class="read-more">
+                                    <a href="#">继续阅读 &raquo;</a></span>
+                            </p>
+                        </div>
+                        <!-- .entry-summary -->
+                        <footer class="entry-meta">
+                            <span>分类:
+                                <a href="#" rel="category tag">技术</a>
+                                <a href="#" rel="category tag">前端</a>
+                            </span>
+                            <span>标签：
+                                <a href="#" rel="tag">性能优化</a>
+                                <a href="#" rel="tag">前端</a>
+                                <a href="#" rel="tag">JavaScript</a>
+                            </span>
+                            <span class="alignright">2023-06-10</span></footer>
+                        <!-- .entry-meta -->
+                    </article>
+                     
+                    <article id="post-3" class="post-3 post type-post status-publish format-standard has-post-thumbnail hentry category-4">
+                        <header class="entry-header">
+                            <h2 class="entry-title">
+                                <a href="#" title="现代CSS布局技巧总结" rel="现代CSS布局技巧总结">现代CSS布局技巧总结</a></h2>
+                        </header>
+                        <!-- .entry-header -->
+                        <div class="entry-summary">
+                            <div class="excerpt-thumb">
+                                <a href="#" title="现代CSS布局技巧总结" rel="bookmark">
+                                    <img width="200" height="112" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&h=112&q=80" class="alignleft wp-post-image" alt="" loading="lazy" /></a>
+                            </div>
+                            <p>随着CSS技术的不断发展，我们现在有了更多强大的布局工具。本文将总结现代CSS布局中的各种技巧和方法，包括Flexbox、Grid、CSS Grid布局等。我们将通过实际案例来展示如何使用这些技术创建复杂而灵活的布局，同时保持代码的简洁和可维护性。...
+                                <span class="read-more">
+                                    <a href="#">继续阅读 &raquo;</a></span>
+                            </p>
+                        </div>
+                        <!-- .entry-summary -->
+                        <footer class="entry-meta">
+                            <span>分类:
+                                <a href="#" rel="category tag">技术</a>
+                                <a href="#" rel="category tag">CSS</a>
+                            </span>
+                            <span>标签：
+                                <a href="#" rel="tag">CSS</a>
+                                <a href="#" rel="tag">布局</a>
+                                <a href="#" rel="tag">Flexbox</a>
+                                <a href="#" rel="tag">Grid</a>
+                            </span>
+                            <span class="alignright">2023-06-05</span></footer>
+                        <!-- .entry-meta -->
+                    </article>
+                     
+                    <!-- 分页导航 -->
+                    <nav id="nav-below" class="navigation" role="navigation">
+                        <div class="assistive-text">文章分页</div>
+                        <div class="nav-previous alignleft">
+                            <a href="#">
+                                <span class="meta-nav">←</span>上一页</a>
+                        </div>
+                        <div class="nav-next alignright">
+                            <a href="#">下一页
+                                <span class="meta-nav">→</span></a>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+            <!-- #primary -->
+            <div id="secondary" class="widget-area" role="complementary">
+                <aside id="recent-posts-2" class="widget widget_recent_entries">
+                    <p class="widget-title">近期文章</p>
+                    <ul>
+                        <li><a href="#">如何搭建一个Cloudflare Workers博客</a></li>
+                        <li><a href="#">前端性能优化实战技巧</a></li>
+                        <li><a href="#">现代CSS布局技巧总结</a></li>
+                        <li><a href="#">JavaScript异步编程全解析</a></li>
+                        <li><a href="#">响应式设计最佳实践</a></li>
+                    </ul>
+                </aside>
+                <aside id="categories-4" class="widget widget_categories">
+                    <p class="widget-title">分类目录</p>
+                    <ul>
+                        <li class="cat-item cat-item-5"><a href="#">技术</a></li>
+                        <li class="cat-item cat-item-6"><a href="#">前端</a></li>
+                        <li class="cat-item cat-item-7"><a href="#">后端</a></li>
+                        <li class="cat-item cat-item-8"><a href="#">生活</a></li>
+                        <li class="cat-item cat-item-9"><a href="#">其他</a></li>
+                    </ul>
+                </aside>
+                <aside id="tag_cloud-2" class="widget widget_tag_cloud">
+                    <p class="widget-title">标签云</p>
+                    <div class="tagcloud">
+                        <a href="#" class="tag-cloud-link tag-link-18 tag-link-position-3" style="font-size: 12pt;">JavaScript</a>
+                        <a href="#" class="tag-cloud-link tag-link-19 tag-link-position-2" style="font-size: 10pt;">CSS</a>
+                        <a href="#" class="tag-cloud-link tag-link-20 tag-link-position-5" style="font-size: 8pt;">HTML</a>
+                        <a href="#" class="tag-cloud-link tag-link-21 tag-link-position-1" style="font-size: 14pt;">性能优化</a>
+                        <a href="#" class="tag-cloud-link tag-link-22 tag-link-position-4" style="font-size: 9pt;">Cloudflare</a>
+                        <a href="#" class="tag-cloud-link tag-link-23 tag-link-position-6" style="font-size: 7pt;">Workers</a>
+                        <a href="#" class="tag-cloud-link tag-link-24 tag-link-position-7" style="font-size: 11pt;">React</a>
+                        <a href="#" class="tag-cloud-link tag-link-25 tag-link-position-8" style="font-size: 6pt;">Vue</a>
+                        <a href="#" class="tag-cloud-link tag-link-26 tag-link-position-9" style="font-size: 8pt;">Node.js</a>
+                    </div>
+                </aside>
+                <aside id="meta-2" class="widget widget_meta">
+                    <p class="widget-title">链接</p>
+                    <ul>
+                        <li><a href="#" target="_blank">管理站点</a></li>
+                        <li><a href="https://github.com" target="_blank">GitHub</a></li>
+                        <li><a href="https://cloudflare.com" target="_blank">Cloudflare</a></li>
+                        <li><a href="https://developer.mozilla.org" target="_blank">MDN</a></li>
+                    </ul>
+                </aside>
+            </div>
+            <!-- #secondary -->
+        </div>
+        <!-- #main .wrapper -->
+        <!-- #colophon -->
+        <div class="site-wordpress">© 2023 我的博客 - 由Cloudflare Workers提供支持</div>
+        <!-- .site-info -->
+        <div class="clear"></div>
+    </div>
+    <!-- #page -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/wp/themes/iconic-one/2.1.8/js/selectnav.min.js?ver=1.0" id="themonic-mobile-navigation-js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/WordPress/WordPress@5.6/wp-includes/js/clipboard.min.js?ver=5.6" id="clipboard-js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/gdtool/zhaopp/cfblog/wp-embed.min.js?ver=5.6" id="wp-embed-js"></script>
+    
+    <!-- 确保jQuery已加载 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // 代码高亮初始化
+        hljs.initHighlightingOnLoad();
+            
+        // 移动端菜单切换功能
+        jQuery(document).ready(function($) {
+            $('.menu-toggle').on('click', function() {
+                $('#menu-top').slideToggle();
+                var expanded = $(this).attr('aria-expanded') === 'true';
+                $(this).attr('aria-expanded', !expanded);
+            });
+            
+            // 平滑滚动效果
+            $('a[href^="#"]').on('click', function(e) {
+                e.preventDefault();
+                var target = $(this.getAttribute('href'));
+                if (target.length) {
+                    window.scrollTo({
+                        top: target.offset().top,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+            
+            // 代码块复制功能增强
+            $('.copy-button').on('click', function() {
+                var button = $(this);
+                var pre = button.closest('pre');
+                var code = pre.find('code').text();
+                
+                // 创建临时输入框
+                var textarea = $('<textarea></textarea>');
+                textarea.val(code);
+                textarea.css({'position': 'fixed', 'top': '-999999px'});
+                $('body').append(textarea);
+                textarea.select();
+                
+                // 复制到剪贴板
+                document.execCommand('copy');
+                textarea.remove();
+                
+                // 显示复制成功提示
+                var originalText = button.text();
+                button.text('已复制!');
+                setTimeout(function() {
+                    button.text(originalText);
+                }, 2000);
+            });
+            
+            // 文章列表卡片悬停效果增强
+            $('.post').on('mouseenter', function() {
+                $(this).css({'transform': 'translateY(-5px)', 'box-shadow': '0 8px 25px rgba(0,0,0,0.1)'});
+            }).on('mouseleave', function() {
+                $(this).css({'transform': 'translateY(0)', 'box-shadow': '0 2px 15px rgba(0,0,0,0.05)'});
+            });
+        });
+    </script>
+</body>
+</html>

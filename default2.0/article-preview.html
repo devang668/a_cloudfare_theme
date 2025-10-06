@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>如何搭建一个Cloudflare Workers博客 - 我的博客</title>
+    <meta name="keywords" content="Cloudflare,Workers,博客,技术" />
+    <meta name="description" content="本文将介绍如何使用Cloudflare Workers搭建一个简单但功能完整的博客系统。" />
+    
+    <!-- 引入外部资源 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu%3A400%2C700&amp;subset=latin%2Clatin-ext" type="text/css" media="all" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/WordPress/WordPress@5.5.3/wp-includes/css/dist/block-library/style.min.css?ver=5.6" type="text/css" media="all" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/wp/themes/iconic-one/2.1.8/custom.min.css?ver=5.6" type="text/css" media="all" />
+    <link rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.3.2/styles/tomorrow-night-bright.min.css">
+    <script src='https://cdn.staticfile.org/highlight.js/10.3.2/highlight.min.js'></script>
+    
+    <!-- 自定义样式 -->
+    <style type="text/css">
+        /* 全局响应式设计优化 */
+        /* 移动端优先设计 */
+        @media (max-width: 768px) {
+          #secondary { display:none !important; }
+          #menu-top {
+            display: none !important;
+          }
+          /* 添加汉堡菜单按钮 */
+          .menu-toggle {
+            display: block;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+          }
+          .site-content {
+            float: none;
+            width: 95%;
+            padding: 20px 2.5% 0;
+            margin: 0 auto;
+          }
+          .site-description {
+            display: none !important;
+          }
+          .io-title-description {
+            display: inline-block;
+            margin: 17px 0;
+            padding: 0px 0;
+            float: none;
+            font-size: 16px;
+          }
+          .wrapper {
+            border: 1px solid #16a1e7 !important;
+            padding: 0 10px;
+          }
+          .entry-header h1 {
+            font-size: 24px !important;
+            line-height: 1.3 !important;
+          }
+          .below-title-meta {
+            font-size: 14px;
+          }
+          .entry-content {
+            font-size: 16px;
+            line-height: 1.6;
+          }
+          .entry-content img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          /* 优化文章内容区域 */
+          .entry-content {
+            padding: 15px 0;
+          }
+          /* 优化表格显示 */
+          table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          /* 优化代码块显示 */
+          pre {
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+          }
+          code {
+            font-size: 14px;
+          }
+        }
+
+        /* 平板和桌面端优化 */
+        @media (min-width: 769px) {
+          .menu-toggle {
+            display: none;
+          }
+          /* 优化内容和侧边栏布局 */
+          #main.wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+          }
+          #primary {
+            flex: 0 0 calc(75% - 20px);
+            margin-right: 20px;
+          }
+          #secondary {
+            flex: 0 0 25%;
+          }
+          /* 优化文章标题显示 */
+          .entry-header h1 {
+            font-size: 28px !important;
+            line-height: 1.3 !important;
+            margin-bottom: 20px;
+          }
+          /* 优化文章内容显示 */
+          .entry-content {
+            font-size: 16px;
+            line-height: 1.7;
+          }
+          /* 优化代码块 */
+          pre {
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+          }
+          /* 优化表格 */
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+          }
+          th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+          }
+          th {
+            background-color: #f8f9fa;
+          }
+        }
+
+        /* 通用样式优化 */
+        body {
+          font-family: 'Microsoft YaHei', Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #f5f7fa;
+        }
+
+        /* 页面容器优化 */
+        #page {
+          max-width: 1200px;
+          margin: 0 auto;
+          background-color: white;
+          box-shadow: 0 0 20px rgba(0,0,0,0.1);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        /* 头部优化 - 云朵状渐变效果 */
+        .site-header {
+          background: linear-gradient(135deg, #87CEEB 0%, #B0E2FF 50%, #87CEEB 100%);
+          background-size: 200% 200%;
+          color: #2c3e50;
+          padding: 20px 0;
+          border-bottom: 3px solid #3498db;
+          animation: cloudFloat 15s ease-in-out infinite;
+        }
+
+        /* 云朵浮动动画 */
+        @keyframes cloudFloat {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        /* 调整标题颜色以适应新背景 */
+        .io-title-description a {
+          color: #2c3e50 !important;
+        }
+
+        .site-description {
+          color: #34495e !important;
+        }
+
+        .io-title-description a {
+          color: white;
+          text-decoration: none;
+          font-weight: bold;
+          font-size: 24px;
+        }
+
+        .site-description {
+          color: #ecf0f1;
+          font-size: 14px;
+        }
+
+        /* 导航菜单优化 */
+        .themonic-nav {
+          background-color: #34495e;
+          padding: 10px 0;
+        }
+
+        .nav-menu {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          text-align: center;
+        }
+
+        .nav-menu li {
+          display: inline-block;
+          margin: 0 10px;
+        }
+
+        .nav-menu li a {
+          color: white;
+          text-decoration: none;
+          padding: 8px 15px;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+        }
+
+        .nav-menu li a:hover {
+          background-color: #3498db;
+          color: white;
+        }
+
+        /* 文章内容优化 */
+        .entry-content {
+          padding: 20px 0;
+        }
+
+        .entry-content h2,
+        .entry-content h3,
+        .entry-content h4,
+        .entry-content h5,
+        .entry-content h6 {
+          color: #2c3e50;
+          margin-top: 30px;
+          margin-bottom: 15px;
+        }
+
+        .entry-content p {
+          margin-bottom: 15px;
+        }
+
+        .entry-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 4px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 侧边栏优化 */
+        .widget-area {
+          padding: 20px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+        }
+
+        .widget-title {
+          color: #2c3e50;
+          font-weight: bold;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #3498db;
+        }
+
+        .widget ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .widget li {
+          margin-bottom: 10px;
+        }
+
+        .widget li a {
+          color: #3498db;
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        .widget li a:hover {
+          color: #2980b9;
+          text-decoration: underline;
+        }
+
+        /* 页脚优化 */
+        .site-wordpress {
+          background-color: #2c3e50;
+          color: white;
+          padding: 20px 0;
+          text-align: center;
+          border-top: 3px solid #3498db;
+        }
+
+        /* 文章导航优化 */
+        .nav-single {
+          margin: 30px 0;
+          padding: 20px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .nav-previous, .nav-next {
+          flex: 1;
+        }
+
+        .nav-previous a, .nav-next a {
+          color: #3498db;
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        .nav-previous a:hover, .nav-next a:hover {
+          color: #2980b9;
+          text-decoration: underline;
+        }
+
+        /* 阅读统计优化 */
+        .adt-comment {
+          margin-top: 10px;
+          font-size: 14px;
+          color: #666;
+        }
+
+        /* 标签云优化 */
+        .tagcloud {
+          margin-top: 10px;
+        }
+
+        .tag-cloud-link {
+          display: inline-block;
+          margin: 5px;
+          padding: 5px 10px;
+          background-color: #ecf0f1;
+          border-radius: 4px;
+          text-decoration: none;
+          transition: all 0.3s ease;
+        }
+
+        .tag-cloud-link:hover {
+          background-color: #3498db;
+          color: white !important;
+        }
+        
+        /* 分类标签优化 */
+        .cat-links a,
+        .tags-links a {
+          display: inline-block;
+          margin: 5px;
+          padding: 5px 10px;
+          background-color: #ecf0f1;
+          border-radius: 4px;
+          text-decoration: none;
+          transition: all 0.3s ease;
+        }
+
+        .cat-links a:hover,
+        .tags-links a:hover {
+          background-color: #3498db;
+          color: white !important;
+        }
+        
+        /* 文章元数据优化 */
+        .below-title-meta {
+          color: #666;
+          font-size: 14px;
+          margin-bottom: 15px;
+        }
+        
+        /* Markdown样式 */
+        .gfm-task-list { border: 1px solid transparent; list-style-type: none; }
+        .gfm-task-list input { margin-right: 10px !important; }
+        .copy-button { cursor: pointer; border: 0; font-size: 12px; text-transform: uppercase; font-weight: 500; padding: 3px 6px 3px 6px; background-color: rgba(255, 255, 255, 0.6); position: absolute; overflow: hidden; top: 5px; right: 5px; border-radius: 3px; }
+        .copy-button:before { content: ""; display: inline-block; width: 16px; height: 16px; margin-right: 3px; background-size: contain; background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='16px' height='16px' viewBox='888 888 16 16' enable-background='new 888 888 16 16' xml:space='preserve'%3E %3Cpath fill='%23333333' d='M903.143,891.429c0.238,0,0.44,0.083,0.607,0.25c0.167,0.167,0.25,0.369,0.25,0.607v10.857 c0,0.238-0.083,0.44-0.25,0.607s-0.369,0.25-0.607,0.25h-8.571c-0.238,0-0.44-0.083-0.607-0.25s-0.25-0.369-0.25-0.607v-2.571 h-4.857c-0.238,0-0.44-0.083-0.607-0.25s-0.25-0.369-0.25-0.607v-6c0-0.238,0.06-0.5,0.179-0.786s0.262-0.512,0.428-0.679 l3.643-3.643c0.167-0.167,0.393-0.309,0.679-0.428s0.547-0.179,0.786-0.179h3.714c0.238,0,0.44,0.083,0.607,0.25 c0.166,0.167,0.25,0.369,0.25,0.607v2.929c0.404-0.238,0.785-0.357,1.143-0.357H903.143z M898.286,893.331l-2.67,2.669h2.67V893.331 z M892.571,889.902l-2.669,2.669h2.669V889.902z M894.321,895.679l2.821-2.822v-3.714h-3.428v3.714c0,0.238-0.083,0.441-0.25,0.607 s-0.369,0.25-0.607,0.25h-3.714v5.714h4.571v-2.286c0-0.238,0.06-0.5,0.179-0.786C894.012,896.071,894.155,895.845,894.321,895.679z M902.857,902.857v-10.286h-3.429v3.714c0,0.238-0.083,0.441-0.25,0.607c-0.167,0.167-0.369,0.25-0.607,0.25h-3.714v5.715H902.857z' /%3E %3C/svg%3E"); background-repeat: no-repeat; position: relative; top: 3px; }
+        pre { position: relative; }
+        pre:hover .copy-button { background-color: rgba(255, 255, 255, 0.9); }
+        
+        /* 图片表情样式 */
+        img.wp-smiley, img.emoji { display: inline !important; border: none !important; box-shadow: none !important; height: 1em !important; width: 1em !important; margin: 0 .07em !important; vertical-align: -0.1em !important; background: none !important; padding: 0 !important; }
+    </style>
+</head>
+<body class="home blog logged-in custom-font-enabled single-author hfeed">
+    <!-- 移动端菜单按钮 -->
+    <button class="menu-toggle" aria-controls="menu-top" aria-expanded="false">菜单</button>
+    
+    <div id="page" class="site">
+        <header id="masthead" class="site-header" role="banner">
+            <div class="io-title-description">
+                <a href="preview.html" title="我的博客" rel="home">我的博客</a>
+                <br />
+                <a class="site-description">分享编程和技术的博客</a>
+            </div>
+            <nav id="site-navigation" class="themonic-nav" role="navigation">
+                <a class="assistive-text" href="#main" title="Skip to content">Skip to content</a>
+                <ul id="menu-top" class="nav-menu">
+                    <li id="menu-item-211" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-211">
+                        <a href="preview.html">首页</a>
+                    </li>
+                    <li id="menu-item-212" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-212">
+                        <a href="#">技术</a>
+                    </li>
+                    <li id="menu-item-213" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-213">
+                        <a href="#">生活</a>
+                    </li>
+                    <li id="menu-item-214" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-214">
+                        <a href="#">关于我</a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- #site-navigation -->
+            <div class="clear"></div>
+        </header>
+        <!-- #masthead -->
+        <div id="main" class="wrapper">
+            <div id="primary" class="site-content">
+                <div id="content" role="main">
+                    <article id="post-1" class="post-1 post type-post status-publish format-standard hentry category-4">
+                        <header class="entry-header">
+                            <h1 class="entry-title">如何搭建一个Cloudflare Workers博客</h1>
+                            <div class="below-title-meta">
+                                <div class="adt">By
+                                    <span class="vcard author">
+                                        <span class="fn">
+                                            <a href="#" title="由admin发布" rel="author">admin</a></span>
+                                    </span>
+                                    <span class="meta-sep">|</span>
+                                    <span class="date updated">2023-06-15</span></div>
+                                <div class="adt-comment">
+                                    <span id="1" class="leancloud_visitors">
+                                        <em class="post-meta-item-text">阅读量: </em>
+                                        <i class="leancloud-visitors-count">1,234</i>
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- below title meta end -->
+                        </header>
+                        <!-- .entry-header -->
+                        <div class="entry-content">
+                            <p>Cloudflare Workers是一个强大的边缘计算平台，可以用来搭建高性能的博客系统。本文将介绍如何使用Cloudflare Workers搭建一个简单但功能完整的博客，包括如何部署、配置和优化你的博客站点。我们将使用JavaScript进行开发，利用Cloudflare Workers的全球分布式网络来提供快速的访问体验。</p>
+                            
+                            <h2>1. 准备工作</h2>
+                            <p>在开始之前，你需要准备以下工具和资源：</p>
+                            <ul>
+                                <li>一个Cloudflare账号</li>
+                                <li>Node.js环境（用于开发和部署）</li>
+                                <li>基本的JavaScript和HTML知识</li>
+                            </ul>
+                            
+                            <p>首先，我们需要安装Cloudflare Workers的命令行工具：</p>
+                            <pre><code class="language-bash">npm install -g wrangler</code></pre>
+                            
+                            <h2>2. 创建Workers项目</h2>
+                            <p>接下来，我们使用wrangler创建一个新的Workers项目：</p>
+                            <pre><code class="language-bash">wrangler generate my-blog</code></pre>
+                            
+                            <p>然后进入项目目录：</p>
+                            <pre><code class="language-bash">cd my-blog</code></pre>
+                            
+                            <h2>3. 配置项目</h2>
+                            <p>编辑<code>wrangler.toml</code>文件，添加你的Cloudflare账号信息：</p>
+                            <pre><code class="language-toml">name = "my-blog"
+type = "javascript"
+account_id = "你的Cloudflare账号ID"
+workers_dev = true
+route = "example.com/*"
+zone_id = "你的域名区域ID"</code></pre>
+                            
+                            <h2>4. 实现博客功能</h2>
+                            <p>现在，让我们开始编写博客的核心功能。首先，我们需要创建一个基本的HTML模板：</p>
+                            <pre><code class="language-javascript">const blogTemplate = (title, content) => `
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;${title} - 我的博客&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;
+        &lt;h1&gt;我的博客&lt;/h1&gt;
+    &lt;/header&gt;
+    &lt;main&gt;
+        &lt;article&gt;
+            &lt;h2&gt;${title}&lt;/h2&gt;
+            ${content}
+        &lt;/article&gt;
+    &lt;/main&gt;
+    &lt;footer&gt;
+        &lt;p&gt;© 2023 我的博客 - 由Cloudflare Workers提供支持&lt;/p&gt;
+    &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+`;</code></pre>
+                            
+                            <p>然后，我们实现博客的路由逻辑：</p>
+                            <pre><code class="language-javascript">addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
+
+async function handleRequest(request) {
+  const url = new URL(request.url)
+  const path = url.pathname
+  
+  // 首页路由
+  if (path === '/') {
+    return new Response(blogTemplate('首页', '&lt;p&gt;欢迎来到我的博客！&lt;/p&gt;'), {
+      headers: { 'Content-Type': 'text/html' }
+    })
+  }
+  
+  // 文章详情页路由
+  if (path.startsWith('/article/')) {
+    const articleId = path.split('/')[2]
+    const article = getArticleById(articleId)
+    
+    if (article) {
+      return new Response(blogTemplate(article.title, article.content), {
+        headers: { 'Content-Type': 'text/html' }
+      })
+    } else {
+      return new Response('文章不存在', { status: 404 })
+    }
+  }
+  
+  // 404页面
+  return new Response('页面不存在', { status: 404 })
+}
+
+// 模拟获取文章数据
+function getArticleById(id) {
+  // 这里应该从数据库或API获取文章数据
+  // 为了简化，我们返回一个模拟的文章
+  return {
+    id,
+    title: '示例文章',
+    content: '&lt;p&gt;这是一篇示例文章内容。&lt;/p&gt;'
+  }
+}</code></pre>
+                            
+                            <h2>5. 部署到Cloudflare</h2>
+                            <p>当我们完成代码编写后，就可以部署到Cloudflare了：</p>
+                            <pre><code class="language-bash">wrangler publish</code></pre>
+                            
+                            <p>部署成功后，你就可以通过你的域名访问你的博客了！</p>
+                            
+                            <h2>6. 优化和扩展</h2>
+                            <p>搭建完成后，你还可以进行以下优化和扩展：</p>
+                            <ul>
+                                <li>添加数据库支持，存储文章内容</li>
+                                <li>实现后台管理功能，方便发布文章</li>
+                                <li>优化SEO，提高博客的搜索引擎排名</li>
+                                <li>添加评论功能，增强用户互动</li>
+                                <li>实现缓存策略，提高访问速度</li>
+                            </ul>
+                            
+                            <h2>总结</h2>
+                            <p>使用Cloudflare Workers搭建博客是一种非常高效和经济的方式。通过本文的介绍，你已经了解了如何创建一个基本的Cloudflare Workers博客。随着你对Cloudflare Workers的深入了解，你还可以实现更多高级功能，打造一个功能完备的博客系统。</p>
+                            
+                            <p>希望本文对你有所帮助！如果你有任何问题或建议，欢迎在评论区留言。</p>
+                        </div>
+                        <!-- .entry-content -->
+                        <footer class="entry-meta">
+                            <span>分类:
+                                <a href="#" rel="category tag">技术</a>
+                                <a href="#" rel="category tag">Cloudflare</a>
+                            </span>  
+                            <span>标签：
+                                <a href="#" rel="tag">Cloudflare</a> 
+                                <a href="#" rel="tag">博客</a> 
+                                <a href="#" rel="tag">Workers</a> 
+                            </span>
+                        </footer>
+                        <!-- .entry-meta -->
+                    </article>
+                    <!-- #post -->
+                    <nav class="nav-single">
+                        <div class="assistive-text">Post navigation</div>
+                        <span class="nav-previous">
+                            <a href="#" rel="prev">
+                                <span class="meta-nav">←</span>前端性能优化实战技巧</a>
+                        </span>
+                        <span class="nav-next">
+                            <a href="#" rel="next">现代CSS布局技巧总结
+                                <span class="meta-nav">→</span></a>
+                        </span>
+                    </nav>
+                    <!-- .nav-single -->
+                    
+                    <!-- 评论区域 -->
+                    <div id="comments" class="comments-area">
+                        <h2 class="comments-title">评论 (3)</h2>
+                        <ol class="commentlist">
+                            <li class="comment byuser comment-author-admin bypostauthor odd alt depth-1" id="comment-1">
+                                <div id="div-comment-1" class="comment-body">
+                                    <div class="comment-author vcard">
+                                        <img alt='' src='https://secure.gravatar.com/avatar/00000000000000000000000000000000?s=60&d=mm&r=g' class='avatar avatar-60 photo avatar-default' height='60' width='60' />
+                                        <cite class="fn"><a href='#' rel='external nofollow' class='url'>张三</a></cite>
+                                        <span class="says">说：</span>
+                                    </div>
+                                    <div class="comment-meta commentmetadata"><a href="#">2023-06-16 10:30</a></div>
+                                    <p>非常实用的教程！我按照步骤成功搭建了自己的Cloudflare Workers博客。</p>
+                                </div>
+                            </li>
+                            <li class="comment byuser comment-author-admin bypostauthor even depth-1" id="comment-2">
+                                <div id="div-comment-2" class="comment-body">
+                                    <div class="comment-author vcard">
+                                        <img alt='' src='https://secure.gravatar.com/avatar/00000000000000000000000000000000?s=60&d=mm&r=g' class='avatar avatar-60 photo avatar-default' height='60' width='60' />
+                                        <cite class="fn"><a href='#' rel='external nofollow' class='url'>李四</a></cite>
+                                        <span class="says">说：</span>
+                                    </div>
+                                    <div class="comment-meta commentmetadata"><a href="#">2023-06-16 14:45</a></div>
+                                    <p>请问如何添加数据库支持？我想存储更多的文章内容。</p>
+                                </div>
+                            </li>
+                            <li class="comment byuser comment-author-admin bypostauthor odd depth-1" id="comment-3">
+                                <div id="div-comment-3" class="comment-body">
+                                    <div class="comment-author vcard">
+                                        <img alt='' src='https://secure.gravatar.com/avatar/00000000000000000000000000000000?s=60&d=mm&r=g' class='avatar avatar-60 photo avatar-default' height='60' width='60' />
+                                        <cite class="fn"><a href='#' rel='external nofollow' class='url'>admin</a></cite>
+                                        <span class="says">说：</span>
+                                    </div>
+                                    <div class="comment-meta commentmetadata"><a href="#">2023-06-16 16:20</a></div>
+                                    <p>@李四 你可以使用Cloudflare KV或者其他的云数据库服务，我会在后续的文章中详细介绍。</p>
+                                </div>
+                            </li>
+                        </ol>
+                        <div id="respond" class="comment-respond">
+                            <h3 id="reply-title" class="comment-reply-title">发表评论 <small><a rel="nofollow" id="cancel-comment-reply-link" href="#respond" style="display:none;">取消回复</a></small></h3>
+                            <form action="#" method="post" id="commentform" class="comment-form" novalidate="novalidate">
+                                <p class="comment-notes"><span id="email-notes">你的电子邮箱地址不会被公开。</span> 必填项已用<span class="required">*</span>标注</p>
+                                <p class="comment-form-comment"><label for="comment">评论</label> <textarea id="comment" name="comment" cols="45" rows="8" aria-required="true" required="required"></textarea></p>
+                                <p class="comment-form-author"><label for="author">姓名 <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" aria-required="true" required="required" /></p>
+                                <p class="comment-form-email"><label for="email">电子邮件 <span class="required">*</span></label> <input id="email" name="email" type="email" value="" size="30" aria-required="true" required="required" /></p>
+                                <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="发表评论" /></p>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- #comments .comments-area -->
+                </div>
+                <!-- #上面俩,二选一 -->
+            </div>
+            <!-- #primary -->
+            <div id="secondary" class="widget-area" role="complementary">
+                <aside id="recent-posts-2" class="widget widget_recent_entries">
+                    <p class="widget-title">近期文章</p>
+                    <ul>
+                        <li><a href="#">如何搭建一个Cloudflare Workers博客</a></li>
+                        <li><a href="#">前端性能优化实战技巧</a></li>
+                        <li><a href="#">现代CSS布局技巧总结</a></li>
+                        <li><a href="#">JavaScript异步编程全解析</a></li>
+                        <li><a href="#">响应式设计最佳实践</a></li>
+                    </ul>
+                </aside>
+                <aside id="categories-4" class="widget widget_categories">
+                    <p class="widget-title">分类目录</p>
+                    <ul>
+                        <li class="cat-item cat-item-5"><a href="#">技术</a></li>
+                        <li class="cat-item cat-item-6"><a href="#">前端</a></li>
+                        <li class="cat-item cat-item-7"><a href="#">后端</a></li>
+                        <li class="cat-item cat-item-8"><a href="#">生活</a></li>
+                        <li class="cat-item cat-item-9"><a href="#">其他</a></li>
+                    </ul>
+                </aside>
+                <aside id="tag_cloud-2" class="widget widget_tag_cloud">
+                    <p class="widget-title">标签云</p>
+                    <div class="tagcloud">
+                        <a href="#" class="tag-cloud-link tag-link-18 tag-link-position-3" style="font-size: 12pt;">JavaScript</a>
+                        <a href="#" class="tag-cloud-link tag-link-19 tag-link-position-2" style="font-size: 10pt;">CSS</a>
+                        <a href="#" class="tag-cloud-link tag-link-20 tag-link-position-5" style="font-size: 8pt;">HTML</a>
+                        <a href="#" class="tag-cloud-link tag-link-21 tag-link-position-1" style="font-size: 14pt;">性能优化</a>
+                        <a href="#" class="tag-cloud-link tag-link-22 tag-link-position-4" style="font-size: 9pt;">Cloudflare</a>
+                        <a href="#" class="tag-cloud-link tag-link-23 tag-link-position-6" style="font-size: 7pt;">Workers</a>
+                        <a href="#" class="tag-cloud-link tag-link-24 tag-link-position-7" style="font-size: 11pt;">React</a>
+                        <a href="#" class="tag-cloud-link tag-link-25 tag-link-position-8" style="font-size: 6pt;">Vue</a>
+                        <a href="#" class="tag-cloud-link tag-link-26 tag-link-position-9" style="font-size: 8pt;">Node.js</a>
+                    </div>
+                </aside>
+                <aside id="meta-2" class="widget widget_meta">
+                    <p class="widget-title">链接</p>
+                    <ul>
+                        <li><a href="#" target="_blank">管理站点</a></li>
+                        <li><a href="https://github.com" target="_blank">GitHub</a></li>
+                        <li><a href="https://cloudflare.com" target="_blank">Cloudflare</a></li>
+                        <li><a href="https://developer.mozilla.org" target="_blank">MDN</a></li>
+                    </ul>
+                </aside>
+            </div>
+            <!-- #secondary -->
+        </div>
+        <!-- #main .wrapper -->
+        <!-- #colophon -->
+        <div class="site-wordpress">© 2023 我的博客 - 由Cloudflare Workers提供支持</div>
+        <!-- .site-info -->
+        <div class="clear"></div>
+    </div>
+    <!-- #page -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/wp/themes/iconic-one/2.1.8/js/selectnav.min.js?ver=1.0" id="themonic-mobile-navigation-js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/WordPress/WordPress@5.6/wp-includes/js/clipboard.min.js?ver=5.6" id="clipboard-js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/gdtool/zhaopp/cfblog/wp-embed.min.js?ver=5.6" id="wp-embed-js"></script>
+    
+    <!-- 确保jQuery已加载 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // 代码高亮初始化
+        hljs.initHighlightingOnLoad();
+            
+        // 移动端菜单切换功能
+        jQuery(document).ready(function($) {
+            $('.menu-toggle').on('click', function() {
+                $('#menu-top').slideToggle();
+                var expanded = $(this).attr('aria-expanded') === 'true';
+                $(this).attr('aria-expanded', !expanded);
+            });
+            
+            // 平滑滚动效果
+            $('a[href^="#"]').on('click', function(e) {
+                e.preventDefault();
+                var target = $(this.getAttribute('href'));
+                if (target.length) {
+                    window.scrollTo({
+                        top: target.offset().top,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+            
+            // 代码块复制功能增强
+            // 为每个代码块添加复制按钮
+            $('pre').each(function() {
+                var $pre = $(this);
+                if (!$pre.find('.copy-button').length) {
+                    $pre.append('<button class="copy-button">复制</button>');
+                }
+            });
+            
+            $('.copy-button').on('click', function() {
+                var button = $(this);
+                var pre = button.closest('pre');
+                var code = pre.find('code').text();
+                
+                // 创建临时输入框
+                var textarea = $('<textarea></textarea>');
+                textarea.val(code);
+                textarea.css({'position': 'fixed', 'top': '-999999px'});
+                $('body').append(textarea);
+                textarea.select();
+                
+                // 复制到剪贴板
+                document.execCommand('copy');
+                textarea.remove();
+                
+                // 显示复制成功提示
+                var originalText = button.text();
+                button.text('已复制!');
+                setTimeout(function() {
+                    button.text(originalText);
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
