@@ -261,12 +261,36 @@ body {
   overflow: hidden;
 }
 
-/* 头部优化 */
+/* 头部优化 - 云朵状渐变效果 */
 .site-header {
-  background-color: #2c3e50;
-  color: white;
+  background: linear-gradient(135deg, #87CEEB 0%, #B0E2FF 50%, #87CEEB 100%);
+  background-size: 200% 200%;
+  color: #2c3e50;
   padding: 20px 0;
   border-bottom: 3px solid #3498db;
+  animation: cloudFloat 15s ease-in-out infinite;
+}
+
+/* 云朵浮动动画 */
+@keyframes cloudFloat {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 调整标题颜色以适应新背景 */
+.io-title-description a {
+  color: #2c3e50 !important;
+}
+
+.site-description {
+  color: #34495e !important;
 }
 
 .io-title-description a {

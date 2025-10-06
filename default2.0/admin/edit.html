@@ -76,29 +76,44 @@
 		}
 		
 		/* 表单样式 */
-		.form-group {
-			margin-bottom: 20px;
-		}
-		
-		.form-group label {
-			color: #34495e;
-			font-weight: 600;
-			display: block;
-			margin-bottom: 8px;
-		}
-		
-		.form-control {
-			border: 1px solid #ddd;
-			border-radius: 4px;
-			padding: 8px 12px;
-			font-size: 14px;
-			transition: border-color 0.3s ease;
-		}
-		
-		.form-control:focus {
-			border-color: #3498db;
-			box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-		}
+.form-group {
+	margin-bottom: 20px;
+}
+
+/* 多列表单布局 */
+.form-row {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 0 -10px;
+}
+
+.form-col {
+	padding: 0 10px;
+	flex: 0 0 50%;
+	max-width: 50%;
+}
+
+.form-group label {
+	color: #34495e;
+	font-weight: 600;
+	display: block;
+	margin-bottom: 8px;
+	font-size: 13px;
+}
+
+.form-control {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 6px 10px;
+	font-size: 13px;
+	transition: border-color 0.3s ease;
+	height: 32px;
+}
+
+.form-control:focus {
+	border-color: #3498db;
+	box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
 		
 		/* 按钮样式 */
 		.btn {
@@ -190,85 +205,89 @@
 		<div class="container-fluid">
 			<h3>编辑文章</h3>   
 
-			<form id="editForm" class="form-horizontal"  action="/" >
+			<form id="editForm"  action="/" >
 
 				<div class="form-group">
 					<input type="hidden" class="form-control" name="id" id="id" readonly required="true">
 				</div>
 				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">标题</label>
-					<div class="col-sm-10">
-						<input type="text" class="form-control" name="title" id="title" placeholder="请输入文章标题" required="true">
+				<!-- 双列布局表单 -->
+				<div class="form-row">
+					<div class="form-col">
+						<div class="form-group">
+							<label>标题</label>
+							<input type="text" class="form-control" name="title" id="title" placeholder="请输入文章标题" required="true">
+						</div>
+					</div>
+					<div class="form-col">
+						<div class="form-group">
+							<label>特色图片</label>
+							<input type="url" class="form-control" name="img" id="img" placeholder="请输入图片URL">
+						</div>
 					</div>
 				</div>
 				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">特色图片</label>
-					<div class="col-sm-10">
-						<input type="url" class="form-control" name="img" id="img" placeholder="请输入图片URL">
+				<div class="form-row">
+					<div class="form-col">
+						<div class="form-group">
+							<label>永久链接</label>
+							<input type="text" class="form-control" name="link" id="link" placeholder="请输入永久链接" required="true">
+						</div>
+					</div>
+					<div class="form-col">
+						<div class="form-group">
+							<label>创建日期</label>
+							<input type="datetime-local" class="form-control" id="createDate" name="createDate" required="true">
+						</div>
 					</div>
 				</div>
 				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">永久链接</label>
-					<div class="col-sm-10">
-						<input type="text" class="form-control" name="link" id="link" placeholder="请输入永久链接" required="true">
+				<div class="form-row">
+					<div class="form-col">
+						<div class="form-group">
+							<label>分类</label>
+							<select class="selectpicker form-control" multiple name="category[]" id="category">
+							</select>
+						</div>
+					</div>
+					<div class="form-col">
+						<div class="form-group">
+							<label>标签</label>
+							<input type="text" class="form-control" name="tags" id="tags" placeholder="标签1,标签2">
+						</div>
 					</div>
 				</div>
 				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">创建日期</label>
-					<div class="col-sm-10">
-						<input type="datetime-local" class="form-control" id="createDate" name="createDate" required="true">
+				<div class="form-row">
+					<div class="form-col">
+						<div class="form-group">
+							<label>权重</label>
+							<input type="text" class="form-control" name="priority" id="priority" value='0.5' placeholder="权重">
+						</div>
+					</div>
+					<div class="form-col">
+						<div class="form-group">
+							<label>更新频率</label>
+						    <select class="form-control" id="changefreq" name="changefreq">
+							<option value="daily" >每日</option>
+							<option value="hourly" >每小时</option>
+							<option value="weekly" >每周</option>
+							<option value="monthly" >每月</option>
+							<option value="yearly" >每年</option>
+							<option value="never" >从不</option>
+							<option value="always" >总是</option>
+						    </select>
+						</div>
 					</div>
 				</div>
 				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">分类</label>
-					<div class="col-sm-10">
-						<select class="selectpicker form-control" multiple name="category[]" id="category">
-						</select>
-					</div>
+				<div class="form-group" style="margin-top: 10px;">
+					<a tabindex="0" role="button" type="submit" id="btn_saveEdit" class="btn btn-default" onclick="saveEdit()">保存</a>
+					<a type="submit" role="button" id="btn_delete" class="btn btn-warning" onclick="deleteArticle()">删除</a>
 				</div>
 				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">标签</label>
-					<div class="col-sm-10">
-						<input type="text" class="form-control" name="tags" id="tags" placeholder="标签1,标签2">
-					</div>
-				</div>
-				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">权重</label>
-					<div class="col-sm-10">
-						<input type="text" class="form-control" name="priority" id="priority" value='0.5' placeholder="权重">
-					</div>
-				</div>
-				
-				<div class="form-group">
-					<label class="col-sm-2 control-label">更新频率</label>
-					<div class="col-sm-10">
-					    <select class="form-control" id="changefreq" name="changefreq">
-						<option value="daily" >每日</option>
-						<option value="hourly" >每小时</option>
-						<option value="weekly" >每周</option>
-						<option value="monthly" >每月</option>
-						<option value="yearly" >每年</option>
-						<option value="never" >从不</option>
-						<option value="always" >总是</option>
-					    </select>
-					</div>
-				</div>
-				
-				<div class="form-group">
-					<div class="col-sm-offset-2 col-sm-10">
-						<a tabindex="0" role="button" type="submit" id="btn_saveEdit" class="btn btn-default" onclick="saveEdit()">保存</a>
-						<a type="submit" role="button" id="btn_delete" class="btn btn-warning" onclick="deleteArticle()">删除</a>
-					</div>
-				</div>
-				
-				<div id="content"><textarea style="display:none;"></textarea></div>
+				<!-- 增加编辑器区域高度 -->
+				<div id="content" style="margin-top: 10px;"><textarea style="display:none;"></textarea></div>
 			</form>
 		</div>
 
@@ -286,7 +305,7 @@
 		
 		var mdEditor = editormd("content", {
 				//width  : "90%",
-				height : 640,
+				height : 800, // 增加编辑器高度
 				path   : "https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/",
 				appendMarkdown : articleJson.contentMD, //编辑器赋值
 				saveHTMLToTextarea : true,
