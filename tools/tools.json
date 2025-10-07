@@ -1,0 +1,40 @@
+{
+  "categories": [
+    {
+      "id": "pdf",
+      "name": "PDF工具",
+      "tools": [
+        {
+          "icon": "📄",
+          "title": "iLovePDF",
+          "desc": "全能 PDF 在线处理：合并、拆分、压缩、转 Word 等",
+          "url": "https://www.ilovepdf.com/zh-cn"
+        },
+        {
+          "icon": "📋",
+          "title": "Smallpdf",
+          "desc": "国际知名 PDF 平台，界面精美功能全",
+          "url": "https://smallpdf.com/"
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI工具",
+      "tools": [
+        {
+          "icon": "🤖",
+          "title": "Kimi",
+          "desc": "月之暗面长文本 AI 助手",
+          "url": "https://kimi.moonshot.cn/"
+        },
+        {
+          "icon": "💎",
+          "title": "Gemini",
+          "desc": "Google 多模态 AI 助手",
+          "url": "https://gemini.google.com/"
+        }
+      ]
+    }
+  ]
+}

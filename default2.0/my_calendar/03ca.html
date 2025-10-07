@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间记录日历</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .settings {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: 500;
+        }
+
+        input[type="time"], input[type="number"], select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .calendar {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e0e0e0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .calendar-day-header {
+            background-color: #f5f5f5;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .calendar-day {
+            background-color: #fff;
+            min-height: 100px;
+            padding: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background-color: #f0f0f0;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+            background-color: #fafafa;
+        }
+
+        .calendar-day.has-records {
+            background-color: #e8f5e9;
+        }
+
+        .day-number {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .record-indicator {
+            width: 6px;
+            height: 6px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .timeline {
+            margin-top: 20px;
+        }
+
+        .timeline-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .timeline-time {
+            font-weight: 600;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+
+        .timeline-content {
+            color: #666;
+        }
+
+        .record-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .export-btn {
+            background-color: #2196F3;
+            margin-top: 20px;
+        }
+
+        .export-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 2000;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>时间记录日历</h1>
+            <div class="settings">
+                <div class="setting-group">
+                    <label for="startTime">开始时间:</label>
+                    <input type="time" id="startTime" value="08:00">
+                </div>
+                <div class="setting-group">
+                    <label for="endTime">结束时间:</label>
+                    <input type="time" id="endTime" value="22:00">
+                </div>
+                <div class="setting-group">
+                    <label for="interval">提醒间隔:</label>
+                    <select id="interval">
+                        <option value="30">30分钟</option>
+                        <option value="45">45分钟</option>
+                        <option value="60">60分钟</option>
+                    </select>
+                </div>
+                <button onclick="saveSettings()">保存设置</button>
+                <button onclick="testNotification()">测试提醒</button>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <button onclick="previousMonth()">上月</button>
+                <h2 id="currentMonth"></h2>
+                <button onclick="nextMonth()">下月</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <button class="export-btn" onclick="exportRecords()">导出记录</button>
+    </div>
+
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalDate"></h2>
+            
+            <div class="record-form">
+                <h3>添加记录</h3>
+                <div class="form-group">
+                    <label for="recordTime">时间:</label>
+                    <input type="time" id="recordTime">
+                </div>
+                <div class="form-group">
+                    <label for="recordContent">内容:</label>
+                    <textarea id="recordContent" rows="3" placeholder="记录你做了什么..."></textarea>
+                </div>
+                <button onclick="addRecord()">添加记录</button>
+            </div>
+
+            <div class="timeline" id="timeline"></div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let currentDate = new Date();
+        let selectedDate = null;
+        let records = JSON.parse(localStorage.getItem('timeRecords')) || {};
+        let notificationInterval = null;
+
+        // 初始化
+        function init() {
+            loadSettings();
+            renderCalendar();
+            checkNotificationPermission();
+            startNotifications();
+        }
+
+        // 检查通知权限
+        function checkNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        // 加载设置
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('timeSettings')) || {};
+            document.getElementById('startTime').value = settings.startTime || '08:00';
+            document.getElementById('endTime').value = settings.endTime || '22:00';
+            document.getElementById('interval').value = settings.interval || '30';
+        }
+
+        // 保存设置
+        function saveSettings() {
+            const settings = {
+                startTime: document.getElementById('startTime').value,
+                endTime: document.getElementById('endTime').value,
+                interval: document.getElementById('interval').value
+            };
+            localStorage.setItem('timeSettings', JSON.stringify(settings));
+            showNotification('设置已保存');
+            startNotifications();
+        }
+
+        // 开始通知
+        function startNotifications() {
+            if (notificationInterval) {
+                clearInterval(notificationInterval);
+            }
+            
+            const settings = JSON.parse(localStorage.getItem('timeSettings')) || {};
+            const interval = (parseInt(settings.interval) || 30) * 60 * 1000;
+            
+            notificationInterval = setInterval(() => {
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                const startTime = timeToMinutes(settings.startTime || '08:00');
+                const endTime = timeToMinutes(settings.endTime || '22:00');
+                
+                if (currentTime >= startTime && currentTime <= endTime) {
+                    showNotification('该记录时间了！');
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('时间记录提醒', {
+                            body: '该记录你正在做什么了！',
+                            icon: '🕐'
+                        });
+                    }
+                }
+            }, interval);
+        }
+
+        // 时间转换为分钟
+        function timeToMinutes(time) {
+            const [hours, minutes] = time.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 测试通知
+        function testNotification() {
+            showNotification('测试提醒！');
+        }
+
+        // 渲染日历
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                `${year}年${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const prevLastDay = new Date(year, month, 0);
+            
+            const firstDayWeek = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            const daysInPrevMonth = prevLastDay.getDate();
+            
+            let html = '';
+            
+            // 星期标题
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            weekDays.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // 上月日期
+            for (let i = firstDayWeek - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                html += `<div class="calendar-day other-month">
+                    <div class="day-number">${day}</div>
+                </div>`;
+            }
+            
+            // 当月日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const hasRecords = records[dateStr] && records[dateStr].length > 0;
+                html += `<div class="calendar-day ${hasRecords ? 'has-records' : ''}" 
+                    onclick="openDayModal('${dateStr}')">
+                    <div class="day-number">${day}</div>
+                    ${hasRecords ? '<div class="record-indicator"></div>' : ''}
+                </div>`;
+            }
+            
+            // 下月日期
+            const remainingDays = 42 - (firstDayWeek + daysInMonth);
+            for (let day = 1; day <= remainingDays; day++) {
+                html += `<div class="calendar-day other-month">
+                    <div class="day-number">${day}</div>
+                </div>`;
+            }
+            
+            document.getElementById('calendarGrid').innerHTML = html;
+        }
+
+        // 上月
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        // 下月
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // 打开日期模态框
+        function openDayModal(dateStr) {
+            selectedDate = dateStr;
+            document.getElementById('modalDate').textContent = formatDate(dateStr);
+            document.getElementById('dayModal').style.display = 'block';
+            renderTimeline();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('dayModal').style.display = 'none';
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+
+        // 添加记录
+        function addRecord() {
+            const time = document.getElementById('recordTime').value;
+            const content = document.getElementById('recordContent').value.trim();
+            
+            if (!time || !content) {
+                showNotification('请填写时间和内容');
+                return;
+            }
+            
+            if (!records[selectedDate]) {
+                records[selectedDate] = [];
+            }
+            
+            records[selectedDate].push({
+                time: time,
+                content: content,
+                timestamp: new Date().toISOString()
+            });
+            
+            records[selectedDate].sort((a, b) => a.time.localeCompare(b.time));
+            
+            localStorage.setItem('timeRecords', JSON.stringify(records));
+            
+            document.getElementById('recordContent').value = '';
+            document.getElementById('recordTime').value = '';
+            
+            renderTimeline();
+            renderCalendar();
+            showNotification('记录已添加');
+        }
+
+        // 渲染时间线
+        function renderTimeline() {
+            const timeline = document.getElementById('timeline');
+            const dayRecords = records[selectedDate] || [];
+            
+            if (dayRecords.length === 0) {
+                timeline.innerHTML = '<p style="text-align: center; color: #999;">暂无记录</p>';
+                return;
+            }
+            
+            let html = '<h3>时间线</h3>';
+            dayRecords.forEach(record => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-time">${record.time}</div>
+                        <div class="timeline-content">${record.content}</div>
+                    </div>
+                `;
+            });
+            
+            timeline.innerHTML = html;
+        }
+
+        // 导出记录
+        function exportRecords() {
+            let csv = '日期,时间,内容\n';
+            
+            Object.keys(records).sort().forEach(date => {
+                records[date].forEach(record => {
+                    csv += `${date},${record.time},"${record.content}"\n`;
+                });
+            });
+            
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `时间记录_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('记录已导出');
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('dayModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
