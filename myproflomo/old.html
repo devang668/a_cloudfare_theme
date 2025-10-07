@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myflomo</title>
+    <style>
+        /* --- 全局样式和变量 --- */
+        :root {
+            --bg-color: #f7f7f7;
+            --card-color: #ffffff;
+            --text-color: #333;
+            --primary-color: #007aff;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* --- 主应用容器 --- */
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 85vh;
+        }
+
+        /* --- 头部和导航 --- */
+        header {
+            padding: 20px 25px;
+            background-color: var(--card-color);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--text-color);
+        }
+        nav {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        nav button {
+            background: #f0f0f0;
+            border: none;
+            color: #555;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        nav button.active, nav button:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* --- 主内容区域 --- */
+        main {
+            padding: 25px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* --- 笔记模块 --- */
+        .note-input-container {
+            margin-bottom: 25px;
+        }
+        #note-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            line-height: 1.6;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #note-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        }
+        .note-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        #save-note-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #save-note-btn:hover {
+            background-color: #0056b3;
+        }
+        .note-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .note-card .content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.7;
+        }
+        .note-card .meta {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 12px;
+            text-align: right;
+        }
+        .note-card .tag {
+            color: var(--primary-color);
+            font-weight: 500;
+            background-color: rgba(0, 122, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        /* --- AI 对话模块 --- */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        .message.user {
+            background-color: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message.bot {
+            background-color: #e9e9eb;
+            color: var(--text-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message.bot.thinking::after {
+            content: '...';
+            display: inline-block;
+            animation: thinking 1s infinite;
+        }
+        @keyframes thinking {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+
+        .chat-input-container { display: flex; }
+        #chat-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px 0 0 8px;
+            font-size: 1em;
+            outline: none;
+        }
+        #send-chat-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            border-radius: 0 8px 8px 0;
+            transition: background-color 0.2s;
+        }
+        #send-chat-btn:hover {
+            background-color: #0056b3;
+        }
+        #send-chat-btn:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+            border-color: #a0a0a0;
+        }
+
+        /* --- 设置模块 --- */
+        .setting-item { margin-bottom: 25px; }
+        .setting-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        .setting-item input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        .setting-item .hint {
+            font-size: 0.85em;
+            color: #777;
+            margin-top: 8px;
+        }
+        .setting-item button {
+             padding: 10px 15px;
+             background-color: #f0f0f0;
+             color: #333;
+             border: 1px solid #ccc;
+             border-radius: 8px;
+             cursor: pointer;
+             font-weight: 500;
+             margin-right: 10px;
+        }
+        .setting-item button.primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        #file-sync-status {
+            font-weight: 500;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+        }
+        #file-sync-status.linked {
+             background-color: #e7f5e8;
+             color: #28a745;
+             border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>my flomo</h1>
+            <nav>
+                <button id="nav-notes" class="active">flomo</button>
+                <button id="nav-chat">chat</button>
+                <button id="nav-settings">setting</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- 笔记模块 -->
+            <div id="notes-view" class="view active">
+                <div class="note-input-container">
+                    <textarea id="note-input" placeholder="输入你的想法... 支持 #标签 语法... 按 Ctrl+Enter 快速保存"></textarea>
+                    <div class="note-actions">
+                        <button id="save-note-btn">记录灵感</button>
+                    </div>
+                </div>
+                <div id="notes-list"></div>
+            </div>
+
+            <!-- AI对话模块 -->
+            <div id="chat-view" class="view">
+                <div class="chat-container">
+                    <div id="chat-history">
+                        <div class="message bot">你好！please inter your API keys now。</div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="输入你的问题...">
+                        <button id="send-chat-btn">发送</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 设置模块 -->
+            <div id="settings-view" class="view">
+                <h2>AI setting</h2>
+                <div class="setting-item">
+                    <label for="api-key-input">你的 AI API Key:</label>
+                    <input type="password" id="api-key-input" placeholder="请在这里输入你的密钥">
+                    <p class="hint">密钥将安全地保存在你的本地浏览器中，不会上传到任何服务器。</p>
+                </div>
+                <div class="setting-item">
+                    <label for="api-endpoint-input">API Endpoint:</label>
+                    <input type="text" id="api-endpoint-input">
+                     <p class="hint">默认是 OpenAI, 你可以换成其他兼容的API地址 (例如 Google, Groq, etc.)。</p>
+                </div>
+                 <div class="setting-item">
+                    <label for="model-name-input">模型名称 (Model Name):</label>
+                    <input type="text" id="model-name-input">
+                     <p class="hint">例如：gpt-4o, gemma-7b-it, etc.</p>
+                </div>
+                <button id="save-settings-btn" class="primary">保存AI设置</button>
+                <!-- 赞赏 & 隐私声明 -->
+                <div class="setting-item" style="margin-top:40px;padding-top:25px;border-top:1px solid var(--border-color);">
+                  <h3 style="margin:0 0 12px;font-size:17px;color:#ff455f;">赞赏 & 联系</h3>
+                  <img src="https://obs-dev-pic-1328513245.cos.ap-nanjing.myqcloud.com/pic/640.jpg" 
+                       alt="赞赏码" style="width:240px;display:block;margin:0 auto 10px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+                  <p style="text-align:center;font-size:14px;margin:0;">
+                    邮箱：<a href="mailto:2551502388@qq.com" style="color:var(--primary-color);font-weight:500;">2551502388@qq.com</a>
+                  </p>
+                </div>
+
+                <!-- 隐私提示 -->
+                <div class="setting-item" style="margin-top:20px;font-size:13px;color:#777;line-height:1.7;background:#f7f7f7;padding:12px;border-radius:8px;">
+                  <strong>隐私说明</strong><br>
+                  本网站不设置任何追踪器，也无法存储您的任何信息。  
+                  所有笔记、配置、AI 密钥仅保存在您自己的浏览器及本地文件中。  
+                  建议定期点击「导出笔记」进行备份，防止浏览器清理导致数据丢失。
+                </div>
+                <h2 style="margin-top: 40px;">数据管理与同步</h2>
+                <div class="setting-item">
+                    <label>笔记自动同步</label>
+                     <button id="link-file-btn">链接本地文件</button>
+                     <div id="file-sync-status">状态：未链接本地文件。笔记仅保存在浏览器中。</div>
+                     <p class="hint">链接一个本地 .json 文件后，所有笔记将自动保存到该文件，实现永久保存。</p>
+                </div>
+                <div class="setting-item">
+                    <label>手动操作</label>
+                     <button id="import-notes-btn">导入笔记</button>
+                     <button id="export-notes-btn">导出笔记</button>
+                     <p class="hint">从 JSON 文件导入笔记，或将当前所有笔记导出为 JSON 文件进行手动备份。</p>
+                </div>
+            </div>
+        </main>
+    </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    /* ================= 原脚本主体（仅追加角色设定 & 可用性检测） ================= */
+    const db = { _db: null, init() { return new Promise((resolve, reject) => { const r = indexedDB.open('LocalAssistantDB', 1); r.onupgradeneeded = e => { const d = e.target.result; if (!d.objectStoreNames.contains('keyval')) d.createObjectStore('keyval'); }; r.onsuccess = e => { this._db = e.target.result; resolve(); }; r.onerror = e => reject(e.target.error); }); }, get(k) { return new Promise((resolve, reject) => { const tx = this._db.transaction(['keyval'], 'readonly'); const req = tx.objectStore('keyval').get(k); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); }); }, set(k, v) { return new Promise((resolve, reject) => { const tx = this._db.transaction(['keyval'], 'readwrite'); const req = tx.objectStore('keyval').put(v, k); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); } };
+    const navButtons = ['notes','chat','settings'].reduce((o,k)=>(o[k]=document.getElementById('nav-'+k),o),{});
+    const views      = ['notes','chat','settings'].reduce((o,k)=>(o[k]=document.getElementById(k+'-view'),o),{});
+    function switchView(n){ Object.values(views).forEach(v=>v.classList.remove('active')); Object.values(navButtons).forEach(b=>b.classList.remove('active')); views[n].classList.add('active'); navButtons[n].classList.add('active'); }
+    Object.keys(navButtons).forEach(k=> navButtons[k].addEventListener('click',()=>{ switchView(k); if(k==='chat') checkAIAndGreet(); })); // 新增：切到 chat 时检测
+
+    const noteInput=document.getElementById('note-input'), saveNoteBtn=document.getElementById('save-note-btn'), notesList=document.getElementById('notes-list');
+    const chatHistory=document.getElementById('chat-history'), chatInput=document.getElementById('chat-input'), sendChatBtn=document.getElementById('send-chat-btn');
+    const apiKeyInput=document.getElementById('api-key-input'), apiEndpointInput=document.getElementById('api-endpoint-input'), modelNameInput=document.getElementById('model-name-input'), saveSettingsBtn=document.getElementById('save-settings-btn');
+    const linkFileBtn=document.getElementById('link-file-btn'), fileSyncStatus=document.getElementById('file-sync-status'), importNotesBtn=document.getElementById('import-notes-btn'), exportNotesBtn=document.getElementById('export-notes-btn');
+
+    let settings={apiKey:'',apiEndpoint:'https://api.moonshot.cn/v1/chat/completions',modelName:'moonshot-v1-8k',rolePrompt:''};
+    let notes=[], fileHandle=null, chatMessages=[], hasGreeted=false; // 新增：是否已问候
+
+    /* --- 文件同步 & 笔记渲染（无改动） --- */
+    async function linkFile(){ try{ const h=await window.showSaveFilePicker({suggestedName:'my-notes.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]}); fileHandle=h; await db.set('fileHandle',h); await saveNotesToFile(); updateFileSyncStatus(); }catch{} }
+    linkFileBtn.addEventListener('click',linkFile);
+    async function saveNotesToFile(){ if(!fileHandle)return; try{const w=await fileHandle.createWritable();await w.write(JSON.stringify(notes,null,2));await w.close();}catch{fileHandle=null;db.set('fileHandle',null);updateFileSyncStatus();alert('保存到文件失败，请重新链接文件。');}}
+    async function loadNotesFromFile(){if(!fileHandle)return false;try{const f=await fileHandle.getFile(),t=await f.text();if(t)notes=JSON.parse(t);return true}catch{return false}}
+    function updateFileSyncStatus(){ fileSyncStatus.textContent=fileHandle?`状态：已链接到文件 "${fileHandle.name}"，笔记将自动保存。`:'状态：未链接本地文件。笔记仅保存在浏览器中。'; fileSyncStatus.classList.toggle('linked',!!fileHandle); }
+    function renderNotes(){ notesList.innerHTML=''; notes.sort((a,b)=>b.timestamp-a.timestamp).forEach(n=>{ const c=document.createElement('div'); c.className='note-card'; const content=document.createElement('div'); content.className='content'; content.innerHTML=n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/#([\p{L}\p{N}_]+)/gu,'<span class="tag">#$1</span>'); const meta=document.createElement('div'); meta.className='meta'; meta.textContent=new Date(n.timestamp).toLocaleString(); c.append(content,meta); notesList.appendChild(c); }); }
+    function saveNote(){ const t=noteInput.value.trim(); if(t){ notes.push({text:t,timestamp:Date.now()}); localStorage.setItem('notes',JSON.stringify(notes)); noteInput.value=''; renderNotes(); saveNotesToFile(); } }
+    saveNoteBtn.addEventListener('click',saveNote); noteInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))saveNote();});
+
+    /* --- 导出：笔记 + 聊天 + 角色设定 合并 --- */
+    function exportNotes(){
+        const data={notes,chatMessages,rolePrompt:settings.rolePrompt,exportAt:new Date().toISOString()};
+        const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(b);
+        a.download=`notes-chat-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+        a.click(); URL.revokeObjectURL(a.href);
+    }
+    exportNotesBtn.addEventListener('click',exportNotes);
+
+    async function importNotes(){ try{const[h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}]});const f=await h.getFile(),t=await f.text(),d=JSON.parse(t); if(Array.isArray(d.notes)&&confirm(`即将导入 ${d.notes.length} 条笔记并覆盖当前笔记，是否继续？`)){notes=d.notes||[]; chatMessages=d.chatMessages||[]; localStorage.setItem('notes',JSON.stringify(notes)); renderNotes(); saveNotesToFile();}}catch{} }
+    importNotesBtn.addEventListener('click',importNotes);
+
+    /* --- 设置：增加「AI 角色设定」输入框 & 复选框 --- */
+    function loadSettings(){
+        const s=localStorage.getItem('aiSettings');
+        if(s) settings={...settings,...JSON.parse(s)};
+        apiKeyInput.value=settings.apiKey||'';
+        apiEndpointInput.value=settings.apiEndpoint||'https://api.moonshot.cn/v1/chat/completions';
+        modelNameInput.value=settings.modelName||'moonshot-v1-8k';
+        // 插入角色设定
+        if(!document.getElementById('role-prompt-input')){
+            const item=document.createElement('div'); item.className='setting-item';
+            item.innerHTML=`<label for="role-prompt-input">AI 角色设定（系统提示词）：</label>
+<textarea id="role-prompt-input" rows="4" style="width:100%;resize:vertical;" placeholder="例如：你是一位温柔的心理咨询师，回答简洁。"></textarea>
+<p class="hint">设定词将随导出文件一并保存，并在每次对话时作为系统提示发送。</p>`;
+            saveSettingsBtn.parentElement.insertBefore(item,saveSettingsBtn);
+        }
+        document.getElementById('role-prompt-input').value=settings.rolePrompt||'';
+        // 复选框
+        if(!document.getElementById('allow-read-notes')){
+            const item=document.createElement('div'); item.className='setting-item';
+            item.innerHTML=`<label><input type="checkbox" id="allow-read-notes" ${localStorage.getItem('allowAIReadNotes')==='true'?'checked':''}> 允许 AI 读取我的全部 flomo</label><p class="hint">勾选后，每次对话会把现有笔记作为上下文发送给 Kimi。</p>`;
+            saveSettingsBtn.parentElement.insertBefore(item,saveSettingsBtn);
+        }
+    }
+    function saveSettings(){
+        settings={
+            apiKey:apiKeyInput.value.trim(),
+            apiEndpoint:apiEndpointInput.value.trim(),
+            modelName:modelNameInput.value.trim(),
+            rolePrompt:document.getElementById('role-prompt-input').value.trim()
+        };
+        localStorage.setItem('aiSettings',JSON.stringify(settings));
+        localStorage.setItem('allowAIReadNotes',document.getElementById('allow-read-notes')?.checked||false);
+        alert('AI设置已保存！');
+    }
+    saveSettingsBtn.addEventListener('click',saveSettings);
+
+    /* --- AI 可用性检测 & 自动问候 --- */
+    async function checkAIAndGreet(){
+        if(hasGreeted) return; // 仅首次进入 chat 时执行
+        if(!settings.apiKey){
+            alert('AI 不可用：请先前往「设置」填写 Kimi API Key 并保存。');
+            switchView('settings');
+            return;
+        }
+        // 简单 ping：发一条空系统消息验证密钥
+        try{
+            const res=await fetch(settings.apiEndpoint,{
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json',
+                    'Authorization':`Bearer ${settings.apiKey}`
+                },
+                body:JSON.stringify({model:settings.modelName,messages:[{role:'system',content:'ping'}],max_tokens:1})
+            });
+            if(!res.ok){ const err=await res.json().catch(()=>({})); throw new Error(err.error?.message||`HTTP ${res.status}`); }
+            // 可用：发送问候
+            const greetMsg=settings.rolePrompt
+                ? `你好！我是你的专属 AI 助手，已按设定角色「${settings.rolePrompt.slice(0,20)}...」与你对话。`
+                : '你好！我是你的 AI 助手，有任何问题都可以问我。';
+            addMessageToHistory(greetMsg,'bot');
+            hasGreeted=true;
+        }catch(err){
+            alert(`AI 不可用：${err.message}\n请检查「设置」中的 API Key、Endpoint 或网络。`);
+            switchView('settings');
+        }
+    }
+
+    function addMessageToHistory(text,sender,isThinking=false){
+        const div=document.createElement('div');
+        div.className=`message ${sender} ${isThinking?'thinking':''}`;
+        div.textContent=text;
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop=chatHistory.scrollHeight;
+        return div;
+    }
+    async function handleSendMessage(){
+        const userMessage=chatInput.value.trim();
+        if(!userMessage||!settings.apiKey){if(!settings.apiKey)alert('请先在「设置」中输入您的 Kimi API Key！');return;}
+        addMessageToHistory(userMessage,'user');
+        chatInput.value='';
+        sendChatBtn.disabled=true;
+        const thinkingMsg=addMessageToHistory('AI 正在思考','bot',true);
+
+        try{
+            const allowRead=localStorage.getItem('allowAIReadNotes')==='true';
+            const messages=[];
+            // 1. 系统角色设定
+            if(settings.rolePrompt) messages.push({role:'system',content:settings.rolePrompt});
+            // 2. 可选：追加笔记上下文
+            if(allowRead&&notes.length){
+                const summary=notes.slice(0,50).map(n=>n.text).join('\n');
+                messages.push({role:'system',content:`用户已允许你读取 TA 的 flomo 笔记，以下是最近笔记（倒序）：\n${summary}\n\n请结合这些笔记上下文回答后续问题。`});
+            }
+            messages.push({role:'user',content:userMessage});
+
+            const res=await fetch(settings.apiEndpoint,{
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json',
+                    'Authorization':`Bearer ${settings.apiKey}`
+                },
+                body:JSON.stringify({model:settings.modelName,messages,temperature:0.7,stream:false})
+            });
+            if(!res.ok){ const err=await res.json().catch(()=>({})); throw new Error(err.error?.message||`HTTP ${res.status}`); }
+            const data=await res.json();
+            const reply=data.choices[0].message.content;
+            thinkingMsg.textContent=reply;
+            thinkingMsg.classList.remove('thinking');
+            // 记录聊天
+            chatMessages.push({role:'user',content:userMessage},{role:'assistant',content:reply});
+            if(chatMessages.length>100) chatMessages=chatMessages.slice(-100);
+        }catch(err){
+            thinkingMsg.textContent=`出错了: ${err.message}`;
+            thinkingMsg.classList.remove('thinking');
+        }finally{
+            sendChatBtn.disabled=false;
+            chatInput.focus();
+        }
+    }
+    sendChatBtn.addEventListener('click',handleSendMessage);
+    chatInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleSendMessage();});
+
+    /* --- 微软雅黑仅作用于笔记输入框 --- */
+    noteInput.style.fontFamily='"Microsoft YaHei","微软雅黑",sans-serif';
+
+    /* --- 初始化 --- */
+    async function init(){
+        await db.init();
+        loadSettings();
+        fileHandle=await db.get('fileHandle');
+        if(fileHandle){
+            if(await fileHandle.queryPermission({mode:'readwrite'})!=='granted'){
+                if(await fileHandle.requestPermission({mode:'readwrite'})!=='granted') fileHandle=null;
+            }
+        }
+        const loaded=await loadNotesFromFile();
+        if(!loaded) notes=JSON.parse(localStorage.getItem('notes')||'[]');
+        renderNotes();
+        updateFileSyncStatus();
+        switchView('notes');
+    }
+    init();
+});
+</script>
+
+</body>
+</html>
+

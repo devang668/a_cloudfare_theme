@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间记录日历 (本地同步版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header, .data-management {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .settings, .data-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: 500;
+        }
+
+        input[type="time"], input[type="number"], select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        button.secondary {
+             background-color: #f0f0f0;
+             color: #333;
+             border: 1px solid #ccc;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.secondary:hover {
+            background-color: #e0e0e0;
+        }
+
+        .calendar {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e0e0e0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .calendar-day-header {
+            background-color: #f5f5f5;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .calendar-day {
+            background-color: #fff;
+            min-height: 100px;
+            padding: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background-color: #f0f0f0;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+            background-color: #fafafa;
+        }
+
+        .calendar-day.has-records {
+            background-color: #e8f5e9;
+        }
+
+        .day-number {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .record-indicator {
+            width: 6px;
+            height: 6px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .timeline {
+            margin-top: 20px;
+        }
+
+        .timeline-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .timeline-time {
+            font-weight: 600;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+
+        .timeline-content {
+            color: #666;
+        }
+
+        .record-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .export-btn {
+            background-color: #2196F3;
+        }
+
+        .export-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        #file-sync-status {
+            font-weight: 500;
+            padding: 8px 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        #file-sync-status.linked {
+             background-color: #e7f5e8;
+             color: #28a745;
+             border-color: #28a745;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 2000;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>时间记录日历</h1>
+            <div class="settings">
+                <div class="setting-group">
+                    <label for="startTime">开始时间:</label>
+                    <input type="time" id="startTime" value="08:00">
+                </div>
+                <div class="setting-group">
+                    <label for="endTime">结束时间:</label>
+                    <input type="time" id="endTime" value="22:00">
+                </div>
+                <div class="setting-group">
+                    <label for="interval">提醒间隔:</label>
+                    <select id="interval">
+                        <option value="30">30分钟</option>
+                        <option value="45">45分钟</option>
+                        <option value="60">60分钟</option>
+                    </select>
+                </div>
+                <button onclick="saveSettings()">保存设置</button>
+                <button onclick="testNotification()" class="secondary">测试提醒</button>
+            </div>
+        </div>
+        
+        <div class="data-management">
+            <h2>数据管理</h2>
+            <div class="data-actions">
+                 <button onclick="linkFile()">链接本地文件</button>
+                 <button onclick="importRecords()" class="secondary">导入记录</button>
+                 <button onclick="exportRecords()" class="export-btn">导出记录</button>
+                 <div id="file-sync-status">状态：未链接本地文件</div>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <button onclick="previousMonth()">上月</button>
+                <h2 id="currentMonth"></h2>
+                <button onclick="nextMonth()">下月</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+    </div>
+
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalDate"></h2>
+            
+            <div class="record-form">
+                <h3>添加记录</h3>
+                <div class="form-group">
+                    <label for="recordTime">时间:</label>
+                    <input type="time" id="recordTime">
+                </div>
+                <div class="form-group">
+                    <label for="recordContent">内容:</label>
+                    <textarea id="recordContent" rows="3" placeholder="记录你做了什么..."></textarea>
+                </div>
+                <button onclick="addRecord()">添加记录</button>
+            </div>
+
+            <div class="timeline" id="timeline"></div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let currentDate = new Date();
+        let selectedDate = null;
+        let records = {};
+        let notificationInterval = null;
+        let fileHandle = null;
+
+        // --- IndexedDB Wrapper for saving file handle ---
+        const db = {
+            _db: null,
+            init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('TimeRecordDB', 1);
+                    request.onupgradeneeded = event => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('keyval')) {
+                            db.createObjectStore('keyval');
+                        }
+                    };
+                    request.onsuccess = event => {
+                        this._db = event.target.result;
+                        resolve();
+                    };
+                    request.onerror = event => reject(event.target.error);
+                });
+            },
+            get(key) {
+                return new Promise((resolve, reject) => {
+                    if (!this._db) return reject('DB not initialized');
+                    const transaction = this._db.transaction(['keyval'], 'readonly');
+                    const store = transaction.objectStore('keyval');
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            set(key, value) {
+                return new Promise((resolve, reject) => {
+                    if (!this._db) return reject('DB not initialized');
+                    const transaction = this._db.transaction(['keyval'], 'readwrite');
+                    const store = transaction.objectStore('keyval');
+                    const request = store.put(value, key);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        };
+
+        // --- File Sync Logic ---
+        async function updateFileSyncStatus() {
+            const statusDiv = document.getElementById('file-sync-status');
+            if (fileHandle) {
+                statusDiv.textContent = `状态：已链接到 "${fileHandle.name}"`;
+                statusDiv.classList.add('linked');
+            } else {
+                statusDiv.textContent = '状态：未链接本地文件';
+                statusDiv.classList.remove('linked');
+            }
+        }
+
+        async function linkFile() {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: 'time-records.json',
+                    types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }]
+                });
+                fileHandle = handle;
+                await db.set('fileHandle', fileHandle);
+                await saveRecordsToFile(); // Immediately save current records
+                updateFileSyncStatus();
+                showNotification(`已成功链接到文件: ${fileHandle.name}`);
+            } catch (err) {
+                console.error('User cancelled or failed to link file:', err);
+            }
+        }
+
+        async function saveRecordsToFile() {
+            if (!fileHandle) return;
+            try {
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(records, null, 2));
+                await writable.close();
+            } catch (err) {
+                console.error('Failed to save to file:', err);
+                fileHandle = null; 
+                db.set('fileHandle', null);
+                updateFileSyncStatus();
+                showNotification('文件保存失败，权限可能已丢失，请重新链接', 'error');
+            }
+        }
+
+        async function loadRecordsFromFile() {
+            if (!fileHandle) return false;
+            try {
+                const file = await fileHandle.getFile();
+                const content = await file.text();
+                if (content) {
+                    records = JSON.parse(content);
+                } else {
+                    records = {};
+                }
+                return true;
+            } catch (err) {
+                console.error('Failed to load records from file:', err);
+                return false;
+            }
+        }
+
+
+        // 初始化
+        async function init() {
+            await db.init();
+            
+            // Try to load file handle from IndexedDB
+            try {
+                fileHandle = await db.get('fileHandle');
+                if (fileHandle) {
+                    if (await fileHandle.queryPermission({ mode: 'readwrite' }) !== 'granted') {
+                        if (await fileHandle.requestPermission({ mode: 'readwrite' }) !== 'granted') {
+                            fileHandle = null;
+                            db.set('fileHandle', null);
+                            showNotification('无法获取文件权限，自动同步已禁用。');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error accessing file handle from DB", e);
+                fileHandle = null;
+            }
+            
+            const loadedFromFile = await loadRecordsFromFile();
+            if (!loadedFromFile) {
+                // Fallback to localStorage if file loading fails
+                records = JSON.parse(localStorage.getItem('timeRecords')) || {};
+            }
+
+            loadSettings();
+            renderCalendar();
+            checkNotificationPermission();
+            startNotifications();
+            updateFileSyncStatus();
+        }
+
+        // 检查通知权限
+        function checkNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        // 加载设置
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('timeSettings')) || {};
+            document.getElementById('startTime').value = settings.startTime || '08:00';
+            document.getElementById('endTime').value = settings.endTime || '22:00';
+            document.getElementById('interval').value = settings.interval || '30';
+        }
+
+        // 保存设置
+        function saveSettings() {
+            const settings = {
+                startTime: document.getElementById('startTime').value,
+                endTime: document.getElementById('endTime').value,
+                interval: document.getElementById('interval').value
+            };
+            localStorage.setItem('timeSettings', JSON.stringify(settings));
+            showNotification('设置已保存');
+            startNotifications();
+        }
+
+        // 开始通知
+        function startNotifications() {
+            if (notificationInterval) {
+                clearInterval(notificationInterval);
+            }
+            
+            const settings = JSON.parse(localStorage.getItem('timeSettings')) || {};
+            const interval = (parseInt(settings.interval) || 30) * 60 * 1000;
+            
+            notificationInterval = setInterval(() => {
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                const startTime = timeToMinutes(settings.startTime || '08:00');
+                const endTime = timeToMinutes(settings.endTime || '22:00');
+                
+                if (currentTime >= startTime && currentTime <= endTime) {
+                    showNotification('该记录时间了！');
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('时间记录提醒', {
+                            body: '该记录你正在做什么了！',
+                            icon: '🕐'
+                        });
+                    }
+                }
+            }, interval);
+        }
+
+        // 时间转换为分钟
+        function timeToMinutes(time) {
+            const [hours, minutes] = time.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 测试通知
+        function testNotification() {
+            showNotification('测试提醒！');
+        }
+
+        // 渲染日历
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                `${year}年${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const prevLastDay = new Date(year, month, 0);
+            
+            const firstDayWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            const daysInPrevMonth = prevLastDay.getDate();
+            
+            let html = '';
+            
+            const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
+            weekDays.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            for (let i = firstDayWeek - 2; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                html += `<div class="calendar-day other-month"><div class="day-number">${day}</div></div>`;
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const hasRecords = records[dateStr] && records[dateStr].length > 0;
+                html += `<div class="calendar-day ${hasRecords ? 'has-records' : ''}" 
+                    onclick="openDayModal('${dateStr}')">
+                    <div class="day-number">${day}</div>
+                    ${hasRecords ? '<div class="record-indicator"></div>' : ''}
+                </div>`;
+            }
+            
+            const gridCells = 42; // 6 rows * 7 columns
+            const currentCells = firstDayWeek -1 + daysInMonth;
+            const remainingDays = gridCells - currentCells;
+
+            for (let day = 1; day <= remainingDays; day++) {
+                html += `<div class="calendar-day other-month"><div class="day-number">${day}</div></div>`;
+            }
+            
+            document.getElementById('calendarGrid').innerHTML = html;
+        }
+
+        // 上月
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        // 下月
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // 打开日期模态框
+        function openDayModal(dateStr) {
+            selectedDate = dateStr;
+            document.getElementById('modalDate').textContent = formatDate(dateStr);
+            document.getElementById('dayModal').style.display = 'block';
+            renderTimeline();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('dayModal').style.display = 'none';
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            // Adjust for timezone offset to prevent date changes
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            const correctedDate = new Date(date.getTime() + userTimezoneOffset);
+            return `${correctedDate.getFullYear()}年${correctedDate.getMonth() + 1}月${correctedDate.getDate()}日`;
+        }
+
+
+        // 添加记录
+        async function addRecord() {
+            const time = document.getElementById('recordTime').value;
+            const content = document.getElementById('recordContent').value.trim();
+            
+            if (!time || !content) {
+                showNotification('请填写时间和内容');
+                return;
+            }
+            
+            if (!records[selectedDate]) {
+                records[selectedDate] = [];
+            }
+            
+            records[selectedDate].push({
+                time: time,
+                content: content,
+                timestamp: new Date().toISOString()
+            });
+            
+            records[selectedDate].sort((a, b) => a.time.localeCompare(b.time));
+            
+            // Save to both localStorage (fallback) and linked file
+            localStorage.setItem('timeRecords', JSON.stringify(records));
+            await saveRecordsToFile();
+            
+            document.getElementById('recordContent').value = '';
+            document.getElementById('recordTime').value = '';
+            
+            renderTimeline();
+            renderCalendar();
+            showNotification('记录已添加');
+        }
+
+        // 渲染时间线
+        function renderTimeline() {
+            const timeline = document.getElementById('timeline');
+            const dayRecords = records[selectedDate] || [];
+            
+            if (dayRecords.length === 0) {
+                timeline.innerHTML = '<p style="text-align: center; color: #999;">暂无记录</p>';
+                return;
+            }
+            
+            let html = '<h3>时间线</h3>';
+            dayRecords.forEach(record => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-time">${record.time}</div>
+                        <div class="timeline-content">${record.content}</div>
+                    </div>
+                `;
+            });
+            
+            timeline.innerHTML = html;
+        }
+
+        // 导出记录
+        function exportRecords() {
+            if (Object.keys(records).length === 0) {
+                showNotification("没有记录可导出");
+                return;
+            }
+            const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `time-records-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('记录已导出为 JSON 文件');
+        }
+        
+        // 导入记录
+        async function importRecords() {
+            try {
+                const [handle] = await window.showOpenFilePicker({
+                     types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }]
+                });
+                const file = await handle.getFile();
+                const content = await file.text();
+                const importedRecords = JSON.parse(content);
+                if (typeof importedRecords === 'object' && !Array.isArray(importedRecords) && confirm(`即将导入记录。这将覆盖您当前的记录，是否继续？`)) {
+                    records = importedRecords;
+                    renderCalendar();
+                    localStorage.setItem('timeRecords', JSON.stringify(records));
+                    await saveRecordsToFile();
+                    showNotification("记录导入成功！");
+                }
+            } catch (err) {
+                console.error('导入失败:', err);
+                showNotification("导入操作失败或被取消");
+            }
+        }
+
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('dayModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
