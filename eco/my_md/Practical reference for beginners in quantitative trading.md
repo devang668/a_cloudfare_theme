@@ -1,6 +1,6 @@
 # Practical reference for beginners in quantitative trading
 
-% 20225-10-09;# btc # xtrade # wealth @ 财富增值
+% 20225-10-07;# btc # xtrade # wealth @ 财富增值
 
 ## 教程
 
