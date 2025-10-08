@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>文章索引</title>
+    <style>
+        body { max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+        h1 { color: #24292e; margin-top: 0; }
+        h2.category-title { color: #4a5568; margin-top: 32px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin-bottom: 16px; padding: 16px; background-color: #f8f9fa; border-radius: 6px; transition: background-color 0.2s, transform 0.2s; }
+        li:hover { background-color: #e9ecef; transform: translateY(-2px); }
+        .article-title { color: #0366d6; text-decoration: none; display: block; font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+        .article-title:hover { text-decoration: underline; }
+        .article-meta { color: #666; font-size: 14px; margin-bottom: 8px; }
+        .article-time { background-color: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .article-tags { margin-top: 8px; }
+        .article-tag { background-color: #e1ecf4; color: #39739d; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 6px; cursor: pointer; }
+        .article-tag:hover { background-color: #c1d5e0; }
+        .category-nav { margin-bottom: 24px; padding: 12px; background-color: #f8f9fa; border-radius: 6px; }
+        .category-btn { background-color: #fff; border: 1px solid #ddd; border-radius: 20px; padding: 6px 16px; margin-right: 8px; cursor: pointer; transition: all 0.2s; }
+        .category-btn:hover { background-color: #f0f0f0; border-color: #0366d6; }
+        .category-btn.active { background-color: #0366d6; color: white; border-color: #0366d6; }
+        .category-section { display: block; }
+        .filter-info { margin: 16px 0; padding: 12px; background-color: #e8f5e8; border-radius: 6px; color: #2e7d32; }
+        .clear-filter { color: #0366d6; cursor: pointer; text-decoration: underline; margin-left: 10px; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            const categorySections = document.querySelectorAll('.category-section');
+            const articleTags = document.querySelectorAll('.article-tag');
+            
+            // 解析URL参数
+            function getUrlParams() {
+                const params = {};
+                const queryString = window.location.search.substring(1);
+                const pairs = queryString.split('&');
+                for (let i = 0; i < pairs.length; i++) {
+                    const pair = pairs[i].split('=');
+                    params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                }
+                return params;
+            }
+            
+            // 应用URL参数过滤
+            const params = getUrlParams();
+            if (params.category) {
+                filterByCategory(params.category);
+                showFilterInfo('分类: ' + params.category);
+            } else if (params.tag) {
+                filterByTag(params.tag);
+                showFilterInfo('标签: #' + params.tag);
+            } else if (categoryButtons.length > 0) {
+                categoryButtons[0].click();
+            }
+            
+            // 按分类过滤
+            function filterByCategory(category) {
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                const activeBtn = Array.from(categoryButtons).find(btn => btn.getAttribute('data-category') === category);
+                if (activeBtn) activeBtn.classList.add('active');
+                
+                categorySections.forEach(section => {
+                    if (section.getAttribute('data-category') === category) {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+            }
+            
+            // 按标签过滤
+            function filterByTag(tag) {
+                categorySections.forEach(section => {
+                    const hasMatchingTag = Array.from(section.querySelectorAll('.article-tag')).some(t => t.textContent.includes(tag));
+                    section.style.display = hasMatchingTag ? 'block' : 'none';
+                });
+                
+                // 高亮包含该标签的分类按钮
+                categoryButtons.forEach(btn => {
+                    const category = btn.getAttribute('data-category');
+                    const section = document.querySelector(`.category-section[data-category="${category}"]`);
+                    const hasMatchingTag = section && Array.from(section.querySelectorAll('.article-tag')).some(t => t.textContent.includes(tag));
+                    btn.classList.toggle('active', hasMatchingTag);
+                });
+            }
+            
+            // 显示过滤信息
+            function showFilterInfo(text) {
+                let filterInfo = document.querySelector('.filter-info');
+                if (!filterInfo) {
+                    filterInfo = document.createElement('div');
+                    filterInfo.className = 'filter-info';
+                    const clearFilter = document.createElement('span');
+                    clearFilter.className = 'clear-filter';
+                    clearFilter.textContent = '清除筛选';
+                    clearFilter.addEventListener('click', function() {
+                        window.location.href = 'index.html';
+                    });
+                    filterInfo.appendChild(clearFilter);
+                    document.body.insertBefore(filterInfo, document.body.firstChild.nextSibling);
+                }
+                const clearFilter = filterInfo.querySelector('.clear-filter');
+                filterInfo.textContent = '筛选结果: ' + text + ' ';
+                filterInfo.appendChild(clearFilter);
+            }
+            
+            // 绑定分类按钮点击事件
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    filterByCategory(category);
+                });
+            });
+            
+            // 绑定标签点击事件
+            articleTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const tagText = this.textContent.replace('#', '');
+                    filterByTag(tagText);
+                    showFilterInfo('标签: #' + tagText);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>文章索引</h1>
+<div class='category-nav'>
+        <span>分类：</span>
+        <button class='category-btn' data-category='财富增值'>财富增值</button>
+        <button class='category-btn' data-category='电子商务'>电子商务</button>
+    </div>
+    <div class='articles-container'>
+    <div class='category-section' data-category='财富增值'>
+        <h2 class='category-title'>财富增值</h2>
+        <ul class='article-list'>
+            <li>
+                <a href='crypto.html' class='article-title'>怎么使用加密货币赚钱</a>
+                <div class='article-meta'><span class='article-time'>20225-10-08</span></div>
+                <div class='article-tags'><span class='article-tag'>#btc</span> <span class='article-tag'>#wealth</span></div>
+            </li>
+        </ul>
+    </div>
+    <div class='category-section' data-category='电子商务'>
+        <h2 class='category-title'>电子商务</h2>
+        <ul class='article-list'>
+            <li>
+                <a href='test.html' class='article-title'>数据透视：欧美人颜色偏好与亚马逊电商购物趋势解析</a>
+                <div class='article-meta'><span class='article-time'>20225-10-08</span></div>
+                <div class='article-tags'><span class='article-tag'>#选品</span> <span class='article-tag'>#temu</span></div>
+            </li>
+        </ul>
+    </div>
+    </div>
+</body>
+</html>
