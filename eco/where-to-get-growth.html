@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>where-to-get-growth</title>
+    <base href="./">
+    <!-- 为GitHub Pages优化的样式引用 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <style>
+        body { max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f5f5f5; }
+        img { max-width: 100%; height: auto; border-radius: 4px; }
+        pre { background-color: #f8f8f8; padding: 16px; border-radius: 4px; overflow-x: auto; }
+        code { background-color: #f1f1f1; padding: 2px 4px; border-radius: 3px; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 16px; margin-left: 0; color: #666; }
+        a { color: #0366d6; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        h1, h2, h3, h4, h5, h6 { color: #24292e; margin-top: 24px; margin-bottom: 16px; }
+        .metadata { color: #666; margin: 16px 0; font-size: 14px; }
+        .meta-tag { background-color: #e1ecf4; color: #39739d; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin: 0 4px; }
+        .meta-category { background-color: #f3e5f5; color: #7b1fa2; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .top-nav { margin-bottom: 24px; padding: 12px; background-color: #f8f9fa; border-radius: 6px; opacity: 0.8; }
+        .nav-category-btn { background-color: #fff; border: 1px solid #ddd; border-radius: 20px; padding: 6px 16px; margin-right: 8px; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .nav-category-btn:hover { background-color: #f0f0f0; border-color: #0366d6; }
+        .nav-category-btn.active { background-color: #0366d6; color: white; border-color: #0366d6; }
+        .article-navigation { margin: 24px 0; }
+        .prev-article, .next-article { padding: 12px; background-color: #f8f9fa; border-radius: 6px; margin: 8px 0; }
+        .prev-article { text-align: left; }
+        .next-article { text-align: right; }
+        .clickable-tags { margin-top: 16px; padding: 12px; background-color: #f8f9fa; border-radius: 6px; }
+        .tag-link { color: #39739d; text-decoration: none; background-color: #e1ecf4; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 6px; }
+        .tag-link:hover { text-decoration: underline; }
+        .index-link { position: fixed; top: 20px; right: 20px; background-color: #0366d6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 14px; z-index: 100; }
+        .index-link:hover { background-color: #0256b3; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryButtons = document.querySelectorAll('.nav-category-btn');
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    // 跳转到索引页并高亮对应分类
+                    window.location.href = 'index.html?category=' + encodeURIComponent(category);
+                });
+            });
+
+            const tagLinks = document.querySelectorAll('.tag-link');
+            tagLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    const tag = this.getAttribute('data-tag');
+                    // 跳转到索引页并过滤对应标签
+                    window.location.href = 'index.html?tag=' + encodeURIComponent(tag);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<a href="index.html" class="index-link">返回索引</a>
+<div class='top-nav'>
+    <span>分类：</span>
+    <button class='nav-category-btn active' data-category='电子商务'>电子商务</button>
+    <button class='nav-category-btn ' data-category='财富增值'>财富增值</button>
+</div>
+<h1>where-to-get-growth</h1>
+<p>% 20225-10-08;# btc # wealth @ 财富增值</p>
+<p>参考日本</p>
+<p>出海/或者做一些低端的（在城市的）</p>
+<p><img alt="image-20251008165404833" src="./where-to-get-growth/image-20251008165404833.png" /></p>
+<p><img alt="image-20251008165420675" src="./where-to-get-growth/image-20251008165420675.png" /></p>
+<div class="article-navigation">
+<div class='prev-article'><a href='test.html'>上一篇：数据透视：欧美人颜色偏好与亚马逊电商购物趋势解析</a></div>
+<div class='next-article'><a href='Ban-cry.html'>下一篇：Ban-cry</a></div>
+</div>
+</body>
+</html>
