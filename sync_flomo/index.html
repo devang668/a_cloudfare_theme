@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebDAV Notes (Cloudflare Sync)</title>
+    <title>Cloudflare KV Notes Sync</title>
     <style>
+        /* ... (CSS 保持不变，但可以删除 WebDAV 相关的样式) ... */
         :root {
             --bg-color: #f8f9fa; --card-color: #ffffff; --text-color: #212529; --primary-color: #007bff;
             --border-color: #dee2e6; --shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -50,20 +51,14 @@
                     <button id="export-btn" class="secondary">Export</button>
                 </div>
             </div>
-            <div class="webdav-settings">
-                <label>坚果云 (Jianguoyun) WebDAV Sync</label>
+            <div class="sync-settings">
+                <label>Cloudflare KV Sync URL</label>
                 <div class="setting-item">
-                    <input type="text" id="webdav-worker-url" placeholder="https://syncflomo.devanglic105.workers.dev">
+                    <input type="text" id="worker-url" placeholder="https://your-worker-name.workers.dev">
                 </div>
-                <div class="setting-item">
-                    <input type="text" id="webdav-user" placeholder="坚果云账户 (Account)">
-                </div>
-                <div class="setting-item">
-                    <input type="password" id="webdav-pass" placeholder="坚果云应用密码 (App Password)">
-                </div>
-                 <div class="actions" style="justify-content: flex-start;">
+                <div class="actions" style="justify-content: flex-start;">
                     <button id="save-settings-btn">Save Settings</button>
-                    <button id="sync-webdav-btn">Sync with WebDAV</button>
+                    <button id="sync-btn">Sync with Cloudflare KV</button>
                 </div>
                 <div id="sync-status">Ready to sync.</div>
             </div>
@@ -77,83 +72,150 @@ document.addEventListener('DOMContentLoaded', () => {
     const notesList = document.getElementById('notes-list');
     const importBtn = document.getElementById('import-btn');
     const exportBtn = document.getElementById('export-btn');
-    const workerUrlInput = document.getElementById('webdav-worker-url');
-    const userInput = document.getElementById('webdav-user');
-    const passInput = document.getElementById('webdav-pass');
+    const workerUrlInput = document.getElementById('worker-url'); // 重命名为 worker-url
+    // const userInput = document.getElementById('webdav-user'); // 移除
+    // const passInput = document.getElementById('webdav-pass'); // 移除
     const saveSettingsBtn = document.getElementById('save-settings-btn');
-    const syncBtn = document.getElementById('sync-webdav-btn');
+    const syncBtn = document.getElementById('sync-btn'); // 重命名
     const syncStatus = document.getElementById('sync-status');
 
     // --- State Variables ---
     let notes = [];
-    let webdavSettings = {};
+    let settings = {}; // 简化为 settings
 
-    const renderNotes = () => { /* ... (same as before) ... */ notesList.innerHTML = ''; notes.sort((a, b) => b.timestamp - a.timestamp).forEach(note => { const card = document.createElement('div'); card.className = 'note-card'; const content = document.createElement('div'); content.textContent = note.text; const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = new Date(note.timestamp).toLocaleString(); card.appendChild(content); card.appendChild(meta); notesList.appendChild(card); }); };
-    const saveNotesToLocal = () => localStorage.setItem('webdavNotes', JSON.stringify(notes));
-    const loadNotesFromLocal = () => { notes = JSON.parse(localStorage.getItem('webdavNotes') || '[]'); renderNotes(); };
-    const saveSettingsToLocal = () => localStorage.setItem('webdavSettings', JSON.stringify(webdavSettings));
-    const loadSettingsFromLocal = () => {
-        webdavSettings = JSON.parse(localStorage.getItem('webdavSettings') || '{}');
-        workerUrlInput.value = webdavSettings.workerUrl || '';
-        userInput.value = webdavSettings.user || '2551502388@qq.com';
-        passInput.value = webdavSettings.pass || 'a9cvu8wn5uwdsxrw';
+    const renderNotes = () => {
+        notesList.innerHTML = '';
+        notes.sort((a, b) => b.timestamp - a.timestamp).forEach(note => {
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            const content = document.createElement('div');
+            content.textContent = note.text;
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = new Date(note.timestamp).toLocaleString();
+            card.appendChild(content);
+            card.appendChild(meta);
+            notesList.appendChild(card);
+        });
     };
     
-    saveNoteBtn.addEventListener('click', () => { const text = noteInput.value.trim(); if (text) { notes.push({ text, timestamp: Date.now() }); noteInput.value = ''; saveNotesToLocal(); renderNotes(); } });
-    exportBtn.addEventListener('click', () => { if (notes.length === 0) return alert('No notes to export.'); const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `notes_export_${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href); });
-    importBtn.addEventListener('click', async () => { try { const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }], }); const file = await fileHandle.getFile(); const content = await file.text(); const importedNotes = JSON.parse(content); if (Array.isArray(importedNotes)) { const existingTimestamps = new Set(notes.map(n => n.timestamp)); const newNotes = importedNotes.filter(n => !existingTimestamps.has(n.timestamp)); if (newNotes.length === 0) return alert('No new notes to import.'); notes = notes.concat(newNotes); saveNotesToLocal(); renderNotes(); alert(`Successfully appended ${newNotes.length} new notes.`); } } catch (err) { console.error('Import failed:', err); } });
+    const saveNotesToLocal = () => localStorage.setItem('cfkvNotes', JSON.stringify(notes));
+    const loadNotesFromLocal = () => { notes = JSON.parse(localStorage.getItem('cfkvNotes') || '[]'); renderNotes(); };
+    
+    const saveSettingsToLocal = () => localStorage.setItem('cfkvSettings', JSON.stringify(settings));
+    const loadSettingsFromLocal = () => {
+        settings = JSON.parse(localStorage.getItem('cfkvSettings') || '{}');
+        // 只加载 Worker URL
+        workerUrlInput.value = settings.workerUrl || '';
+    };
+    
+    // --- Event Listeners (Save/Export/Import remain the same) ---
+    saveNoteBtn.addEventListener('click', () => { 
+        const text = noteInput.value.trim(); 
+        if (text) { 
+            notes.push({ text, timestamp: Date.now() }); 
+            noteInput.value = ''; 
+            saveNotesToLocal(); 
+            renderNotes(); 
+        } 
+    });
+    
+    exportBtn.addEventListener('click', () => { 
+        if (notes.length === 0) return alert('No notes to export.'); 
+        const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' }); 
+        const a = document.createElement('a'); 
+        a.href = URL.createObjectURL(blob); 
+        a.download = `notes_export_${Date.now()}.json`; 
+        a.click(); 
+        URL.revokeObjectURL(a.href); 
+    });
+    
+    importBtn.addEventListener('click', async () => { 
+        try { 
+            const [fileHandle] = await window.showOpenFilePicker({ 
+                types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }], 
+            }); 
+            const file = await fileHandle.getFile(); 
+            const content = await file.text(); 
+            const importedNotes = JSON.parse(content); 
+            if (Array.isArray(importedNotes)) { 
+                const existingTimestamps = new Set(notes.map(n => n.timestamp)); 
+                const newNotes = importedNotes.filter(n => !existingTimestamps.has(n.timestamp)); 
+                if (newNotes.length === 0) return alert('No new notes to import.'); 
+                notes = notes.concat(newNotes); 
+                saveNotesToLocal(); 
+                renderNotes(); 
+                alert(`Successfully appended ${newNotes.length} new notes.`); 
+            } else {
+                alert('Import failed: JSON file content is not a valid array.');
+            }
+        } catch (err) { 
+            console.error('Import failed:', err); 
+            alert('Import failed. Check console for details.');
+        } 
+    });
     
     saveSettingsBtn.addEventListener('click', () => {
-        webdavSettings = {
+        settings = {
             workerUrl: workerUrlInput.value.trim(),
-            user: userInput.value.trim(),
-            pass: passInput.value,
         };
         saveSettingsToLocal();
         alert('Settings saved!');
     });
 
+    // --- KV Sync Logic (Simplified) ---
     syncBtn.addEventListener('click', async () => {
-        if (!webdavSettings.workerUrl || !webdavSettings.user || !webdavSettings.pass) {
-            return alert('Please save your Worker URL and WebDAV settings first.');
+        if (!settings.workerUrl) {
+            return alert('Please save your Worker URL first.');
         }
         syncStatus.textContent = 'Syncing...';
-        // The path now starts with `/dav/` because the worker handles the hostname
-        const remoteFilePath = `${webdavSettings.workerUrl}/dav/notes.json`;
-        const authHeader = 'Basic ' + btoa(`${webdavSettings.user}:${webdavSettings.pass}`);
+        
+        // 核心同步端点：Worker URL + /sync
+        const remoteApiUrl = `${settings.workerUrl.replace(/\/$/, "")}/sync`; // 确保 URL 正确
+
         try {
             let remoteNotes = [];
-            const getResponse = await fetch(remoteFilePath, {
-                method: 'GET',
-                headers: { 'Authorization': authHeader }
+            
+            // 1. GET: 从 KV 下载笔记
+            const getResponse = await fetch(remoteApiUrl, {
+                method: 'GET'
             });
+
             if (getResponse.ok) {
-                remoteNotes = await getResponse.json();
-            } else if (getResponse.status !== 404) {
+                // KV Worker 保证返回有效 JSON 数组 (可能是 [])
+                remoteNotes = await getResponse.json(); 
+            } else {
+                // 如果 Worker 返回 5xx 错误，则抛出
                 throw new Error(`Failed to download: ${getResponse.statusText}`);
             }
 
+            // 2. 合并：本地笔记和远程笔记
             const allNotes = [...notes, ...remoteNotes];
+            // 使用 Map 进行去重，以 timestamp 作为唯一键
             const mergedNotesMap = new Map(allNotes.map(note => [note.timestamp, note]));
+            // 转换为数组并按时间戳排序
             const finalNotes = Array.from(mergedNotesMap.values()).sort((a, b) => b.timestamp - a.timestamp);
             
-            const putResponse = await fetch(remoteFilePath, {
+            // 3. PUT: 上传合并后的笔记到 KV
+            const putResponse = await fetch(remoteApiUrl, {
                 method: 'PUT',
-                headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-                body: JSON.stringify(finalNotes, null, 2)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalNotes) // 发送最终合并的数据
             });
 
             if (!putResponse.ok) {
                 throw new Error(`Failed to upload: ${putResponse.statusText}`);
             }
 
+            // 4. 更新本地状态
             notes = finalNotes;
             saveNotesToLocal();
             renderNotes();
-            syncStatus.textContent = `Sync successful at ${new Date().toLocaleTimeString()}`;
+            syncStatus.textContent = `Sync successful with ${notes.length} notes at ${new Date().toLocaleTimeString()}`;
+            
         } catch (error) {
-            console.error('WebDAV Sync Error:', error);
-            syncStatus.textContent = `Error: ${error.message}. Check Worker status or credentials.`;
+            console.error('KV Sync Error:', error);
+            syncStatus.textContent = `Error: ${error.message}. Check Worker URL or deployment.`;
         }
     });
 
