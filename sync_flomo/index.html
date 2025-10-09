@@ -1,96 +1,165 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <title>Flomo 同步（Cloudflare 安全版）</title>
-  <style>
-    body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 20px auto; background: #fafafa; }
-    textarea { width: 100%; height: 180px; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-    button { margin: 5px 5px 5px 0; padding: 8px 16px; background: #4a6cf7; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { opacity: 0.9; }
-    #status { margin-top: 10px; padding: 8px; background: #e6f7ff; border-radius: 4px; font-size: 14px; }
-    input { width: 100%; padding: 8px; margin: 4px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebDAV Notes (Cloudflare Sync)</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa; --card-color: #ffffff; --text-color: #212529; --primary-color: #007bff;
+            --border-color: #dee2e6; --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: var(--card-color); border-radius: 12px; box-shadow: var(--shadow); padding: 25px; }
+        h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1em; line-height: 1.6; resize: vertical; box-sizing: border-box; }
+        .actions { display: flex; justify-content: flex-end; margin-top: 15px; gap: 10px; }
+        button { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 1em; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #5a6268; }
+        .note-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px; white-space: pre-wrap; word-wrap: break-word; }
+        .note-card .meta { font-size: 0.8em; color: #6c757d; margin-top: 12px; text-align: right; }
+        .setting-item { margin-bottom: 15px; }
+        .setting-item label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .setting-item input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; }
+        #sync-status { margin-top: 15px; padding: 10px; background-color: #f1f3f5; border-radius: 8px; text-align: center; font-weight: 500; }
+    </style>
 </head>
 <body>
-  <h2>📝 Flomo 笔记（WebDAV 安全同步）</h2>
-  <textarea id="note" placeholder="写下你的想法..."></textarea><br>
-  <button onclick="saveLocal()">💾 保存本地</button>
-  <button onclick="syncToCloud()">🔄 同步到坚果云</button>
-  <button onclick="loadFromCloud()">⬇️ 从坚果云加载</button>
-  <div id="status">准备就绪</div>
+    <div class="app-container">
+        <div class="card">
+            <h2>New Note</h2>
+            <textarea id="note-input" placeholder="Write your thoughts here..."></textarea>
+            <div class="actions">
+                <button id="save-note-btn">Save Note</button>
+            </div>
+        </div>
+        <div class="card">
+            <h2>My Notes</h2>
+            <div id="notes-list"></div>
+        </div>
+        <div class="card">
+            <h2>Settings & Data</h2>
+            <div class="data-actions" style="margin-bottom: 20px;">
+                <label>Data Management</label>
+                <div class="actions" style="justify-content: flex-start;">
+                    <button id="import-btn" class="secondary">Import</button>
+                    <button id="export-btn" class="secondary">Export</button>
+                </div>
+            </div>
+            <div class="webdav-settings">
+                <label>坚果云 (Jianguoyun) WebDAV Sync</label>
+                <div class="setting-item">
+                    <input type="text" id="webdav-worker-url" placeholder="https://syncflomo.devanglic105.workers.dev">
+                </div>
+                <div class="setting-item">
+                    <input type="text" id="webdav-user" placeholder="坚果云账户 (Account)">
+                </div>
+                <div class="setting-item">
+                    <input type="password" id="webdav-pass" placeholder="坚果云应用密码 (App Password)">
+                </div>
+                 <div class="actions" style="justify-content: flex-start;">
+                    <button id="save-settings-btn">Save Settings</button>
+                    <button id="sync-webdav-btn">Sync with WebDAV</button>
+                </div>
+                <div id="sync-status">Ready to sync.</div>
+            </div>
+        </div>
+    </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
+    const noteInput = document.getElementById('note-input');
+    const saveNoteBtn = document.getElementById('save-note-btn');
+    const notesList = document.getElementById('notes-list');
+    const importBtn = document.getElementById('import-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const workerUrlInput = document.getElementById('webdav-worker-url');
+    const userInput = document.getElementById('webdav-user');
+    const passInput = document.getElementById('webdav-pass');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const syncBtn = document.getElementById('sync-webdav-btn');
+    const syncStatus = document.getElementById('sync-status');
 
-  <h3>🔑 同步设置（坚果云）</h3>
-  <input type="email" id="email" placeholder="坚果云注册邮箱" />
-  <input type="password" id="password" placeholder="WebDAV 密码（在坚果云账户设置中获取）" />
-  <div style="font-size:12px;color:#666;margin-top:6px;">
-    💡 WebDAV 密码 ≠ 登录密码！路径：坚果云官网 → 账户设置 → 安全 → WebDAV 密码
-  </div>
+    // --- State Variables ---
+    let notes = [];
+    let webdavSettings = {};
 
-  <script>
-    // 👇 替换为你的 Cloudflare Worker URL！
-// ✅ 正确的前端调用方式
-const WORKER_URL = 'https://jianguo.devang.top'; // 你的自定义域名或 workers.dev 地址
+    const renderNotes = () => { /* ... (same as before) ... */ notesList.innerHTML = ''; notes.sort((a, b) => b.timestamp - a.timestamp).forEach(note => { const card = document.createElement('div'); card.className = 'note-card'; const content = document.createElement('div'); content.textContent = note.text; const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = new Date(note.timestamp).toLocaleString(); card.appendChild(content); card.appendChild(meta); notesList.appendChild(card); }); };
+    const saveNotesToLocal = () => localStorage.setItem('webdavNotes', JSON.stringify(notes));
+    const loadNotesFromLocal = () => { notes = JSON.parse(localStorage.getItem('webdavNotes') || '[]'); renderNotes(); };
+    const saveSettingsToLocal = () => localStorage.setItem('webdavSettings', JSON.stringify(webdavSettings));
+    const loadSettingsFromLocal = () => {
+        webdavSettings = JSON.parse(localStorage.getItem('webdavSettings') || '{}');
+        workerUrlInput.value = webdavSettings.workerUrl || '';
+        userInput.value = webdavSettings.user || '2551502388@qq.com';
+        passInput.value = webdavSettings.pass || 'a9cvu8wn5uwdsxrw';
+    };
+    
+    saveNoteBtn.addEventListener('click', () => { const text = noteInput.value.trim(); if (text) { notes.push({ text, timestamp: Date.now() }); noteInput.value = ''; saveNotesToLocal(); renderNotes(); } });
+    exportBtn.addEventListener('click', () => { if (notes.length === 0) return alert('No notes to export.'); const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `notes_export_${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href); });
+    importBtn.addEventListener('click', async () => { try { const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }], }); const file = await fileHandle.getFile(); const content = await file.text(); const importedNotes = JSON.parse(content); if (Array.isArray(importedNotes)) { const existingTimestamps = new Set(notes.map(n => n.timestamp)); const newNotes = importedNotes.filter(n => !existingTimestamps.has(n.timestamp)); if (newNotes.length === 0) return alert('No new notes to import.'); notes = notes.concat(newNotes); saveNotesToLocal(); renderNotes(); alert(`Successfully appended ${newNotes.length} new notes.`); } } catch (err) { console.error('Import failed:', err); } });
+    
+    saveSettingsBtn.addEventListener('click', () => {
+        webdavSettings = {
+            workerUrl: workerUrlInput.value.trim(),
+            user: userInput.value.trim(),
+            pass: passInput.value,
+        };
+        saveSettingsToLocal();
+        alert('Settings saved!');
+    });
 
-async function callWebDAV(method, fileName, data = null) {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-  if (!email || !password) throw new Error('请填写邮箱和密码');
+    syncBtn.addEventListener('click', async () => {
+        if (!webdavSettings.workerUrl || !webdavSettings.user || !webdavSettings.pass) {
+            return alert('Please save your Worker URL and WebDAV settings first.');
+        }
+        syncStatus.textContent = 'Syncing...';
+        // The path now starts with `/dav/` because the worker handles the hostname
+        const remoteFilePath = `${webdavSettings.workerUrl}/dav/notes.json`;
+        const authHeader = 'Basic ' + btoa(`${webdavSettings.user}:${webdavSettings.pass}`);
+        try {
+            let remoteNotes = [];
+            const getResponse = await fetch(remoteFilePath, {
+                method: 'GET',
+                headers: { 'Authorization': authHeader }
+            });
+            if (getResponse.ok) {
+                remoteNotes = await getResponse.json();
+            } else if (getResponse.status !== 404) {
+                throw new Error(`Failed to download: ${getResponse.statusText}`);
+            }
 
-  const auth = 'Basic ' + btoa(email + ':' + password);
-  // 👇 注意：这里只传文件名，如 'flomo-notes.json'
-  const url = `${WORKER_URL}/${encodeURIComponent(fileName)}`;
+            const allNotes = [...notes, ...remoteNotes];
+            const mergedNotesMap = new Map(allNotes.map(note => [note.timestamp, note]));
+            const finalNotes = Array.from(mergedNotesMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+            
+            const putResponse = await fetch(remoteFilePath, {
+                method: 'PUT',
+                headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalNotes, null, 2)
+            });
 
-  const options = {
-    method,
-    headers: {
-      'Authorization': auth,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
-  };
+            if (!putResponse.ok) {
+                throw new Error(`Failed to upload: ${putResponse.statusText}`);
+            }
 
-  if (data) options.body = JSON.stringify(data);
+            notes = finalNotes;
+            saveNotesToLocal();
+            renderNotes();
+            syncStatus.textContent = `Sync successful at ${new Date().toLocaleTimeString()}`;
+        } catch (error) {
+            console.error('WebDAV Sync Error:', error);
+            syncStatus.textContent = `Error: ${error.message}. Check Worker status or credentials.`;
+        }
+    });
 
-  const res = await fetch(url, options);
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    if (res.status === 401) msg = 'WebDAV 密码错误';
-    else if (res.status === 404 && method === 'GET') msg = '云端无数据';
-    throw new Error(msg);
-  }
-  return res;
-}
-
-    async function syncToCloud() {
-      try {
-        setStatus('⏳ 正在同步到坚果云...');
-        const content = document.getElementById('note').value;
-        await callWebDAV('PUT', 'flomo-notes.json', { content, ts: Date.now() });
-        localStorage.setItem('flomo_note', content);
-        setStatus('✅ 同步成功！数据已保存至坚果云');
-      } catch (err) {
-        console.error(err);
-        setStatus(err.message || '同步失败');
-      }
-    }
-
-    async function loadFromCloud() {
-      try {
-        setStatus('⏳ 正在从坚果云加载...');
-        const res = await callWebDAV('GET', 'flomo-notes.json');
-        const data = await res.json();
-        document.getElementById('note').value = data.content || '';
-        localStorage.setItem('flomo_note', data.content || '');
-        setStatus('✅ 加载成功！');
-      } catch (err) {
-        console.error(err);
-        setStatus(err.message || '加载失败');
-      }
-    }
-
-    // 初始化
-    const saved = localStorage.getItem('flomo_note');
-    if (saved) document.getElementById('note').value = saved;
-  </script>
+    const init = () => { loadNotesFromLocal(); loadSettingsFromLocal(); };
+    init();
+});
+</script>
 </body>
 </html>
