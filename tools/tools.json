@@ -1,8 +1,8 @@
 {
   "categories": [
     {
-      "id": "pdf",
-      "name": "PDF工具",
+      "id": "document",
+      "name": "文档工具",
       "tools": [
         {
           "icon": "📄",
@@ -15,15 +15,27 @@
           "title": "Smallpdf",
           "desc": "国际知名 PDF 平台，界面精美功能全",
           "url": "https://smallpdf.com/"
+        },
+        {
+          "icon": "✂️",
+          "title": "PDF24 Tools",
+          "desc": "PDF 转换、编辑、压缩一站式解决方案",
+          "url": "https://tools.pdf24.org/zh"
+        },
+        {
+          "icon": "📝",
+          "title": "WPS在线",
+          "desc": "在线办公套件，支持Word、Excel、PPT等格式",
+          "url": "https://www.kdocs.cn/"
         }
       ]
     },
     {
-      "id": "ai",
-      "name": "AI工具",
+      "id": "ai-writing",
+      "name": "AI写作工具",
       "tools": [
         {
-          "icon": "🤖",
+          "icon": "✍️",
           "title": "Kimi",
           "desc": "月之暗面长文本 AI 助手",
           "url": "https://kimi.moonshot.cn/"
@@ -33,6 +45,174 @@
           "title": "Gemini",
           "desc": "Google 多模态 AI 助手",
           "url": "https://gemini.google.com/"
+        },
+        {
+          "icon": "🧠",
+          "title": "通义千问",
+          "desc": "阿里云开发的智能问答助手",
+          "url": "https://qianwen.aliyun.com/"
+        },
+        {
+          "icon": "🎯",
+          "title": "文心一言",
+          "desc": "百度开发的生成式AI助手",
+          "url": "https://yiyan.baidu.com/"
+        }
+      ]
+    },
+    {
+      "id": "ai-audio",
+      "name": "AI音频工具",
+      "tools": [
+        {
+          "icon": "🔊",
+          "title": "讯飞听见",
+          "desc": "语音转文字、多语言翻译",
+          "url": "https://www.iflyrec.com/"
+        },
+        {
+          "icon": "🎵",
+          "title": "Adobe Podcast",
+          "desc": "专业级音频增强与后期处理",
+          "url": "https://podcast.adobe.com/"
+        },
+        {
+          "icon": "🎤",
+          "title": "剪映语音转文字",
+          "desc": "短视频语音自动识别与字幕生成",
+          "url": "https://www.capcut.cn/tools/ai-voice-to-text"
+        },
+        {
+          "icon": "🗣️",
+          "title": "腾讯智影",
+          "desc": "AI配音、语音合成工具",
+          "url": "https://zenvideo.qq.com/"
+        }
+      ]
+    },
+    {
+      "id": "ai-video",
+      "name": "AI视频工具",
+      "tools": [
+        {
+          "icon": "🎬",
+          "title": "剪映",
+          "desc": "AI辅助视频剪辑、特效、字幕",
+          "url": "https://www.capcut.cn/"
+        },
+        {
+          "icon": "✨",
+          "title": "美图秀秀",
+          "desc": "AI美颜、滤镜、图片视频编辑",
+          "url": "https://pc.meitu.com/"
+        },
+        {
+          "icon": "🎞️",
+          "title": "腾讯智影",
+          "desc": "AI视频生成、剪辑、智能包装",
+          "url": "https://zenvideo.qq.com/"
+        },
+        {
+          "icon": "🎨",
+          "title": "Canva可画",
+          "desc": "AI辅助设计、视频制作平台",
+          "url": "https://www.canva.cn/"
+        }
+      ]
+    },
+    {
+      "id": "hotspot",
+      "name": "热点发现",
+      "tools": [
+        {
+          "icon": "🔥",
+          "title": "即时热榜",
+          "desc": "覆盖100+站点的全网热榜聚合，支持关键词订阅",
+          "url": "https://www.rebang.today"
+        },
+        {
+          "icon": "📊",
+          "title": "今日热榜",
+          "desc": "热榜右侧直接给出'关联词云'，一眼看出话题上下游",
+          "url": "https://tophub.today"
+        },
+        {
+          "icon": "📈",
+          "title": "新榜热榜工具箱",
+          "desc": "把'阅读量/点赞/涨粉'三合一，爆款公式直接给你",
+          "url": "https://www.newrank.cn"
+        },
+        {
+          "icon": "🔍",
+          "title": "5118营销大数据",
+          "desc": "输入任意关键词→得到'网友最关心的问题'清单",
+          "url": "https://so.5118.com"
+        },
+        {
+          "icon": "📰",
+          "title": "36氪",
+          "desc": "科技、财经、社会热点新闻资讯",
+          "url": "https://36kr.com/"
+        },
+        {
+          "icon": "🌐",
+          "title": "Google Trends",
+          "desc": "查看全球热度曲线，对比关键词热度",
+          "url": "https://trends.google.com"
+        },
+        {
+          "icon": "📱",
+          "title": "灰豚红薯",
+          "desc": "小红书周榜/月榜，热门话题分析",
+          "url": "https://xhs.huitun.com"
+        },
+        {
+          "icon": "📋",
+          "title": "蝉妈妈",
+          "desc": "热门商品+热门话题双榜单，可直接看互动率最高的笔记",
+          "url": "https://xhs.chanmama.com"
+        }
+      ]
+    },
+    {
+      "id": "media-platform",
+      "name": "自媒体平台",
+      "tools": [
+        {
+          "icon": "🧠",
+          "title": "知乎",
+          "desc": "知识问答社区，专业内容创作平台",
+          "url": "https://www.zhihu.com/"
+        },
+        {
+          "icon": "📱",
+          "title": "小红书",
+          "desc": "生活方式分享平台，种草社区",
+          "url": "https://www.xiaohongshu.com/"
+        },
+        {
+          "icon": "🎵",
+          "title": "抖音",
+          "desc": "短视频社交平台，热门内容创作",
+          "url": "https://www.douyin.com/"
+        },
+        {
+          "icon": "📺",
+          "title": "B站",
+          "desc": "年轻人喜爱的视频社区",
+          "url": "https://www.bilibili.com/"
+        },
+        {
+          "icon": "📰",
+          "title": "今日头条",
+          "desc": "个性化推荐新闻资讯平台",
+          "url": "https://www.toutiao.com/"
+        },
+        {
+          "icon": "💬",
+          "title": "微博",
+          "desc": "社交媒体平台，热点讨论中心",
+          "url": "https://weibo.com/"
         }
       ]
     }
