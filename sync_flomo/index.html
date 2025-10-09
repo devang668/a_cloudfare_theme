@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的 Flomo 笔记（WebDAV 同步版）</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4a6cf7;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .sync-status {
+      margin-top: 12px;
+      padding: 8px;
+      background: #e6f7ff;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .settings {
+      margin-top: 30px;
+      padding: 16px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .guide {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📝 我的 Flomo 笔记</h1>
+  <textarea id="noteInput" placeholder="写下你的想法..."></textarea>
+  <br>
+  <button id="saveBtn">保存到本地</button>
+  <button id="syncBtn">🔄 同步到坚果云</button>
+  <button id="loadBtn">⬇️ 从坚果云加载</button>
+
+  <div id="status" class="sync-status">未同步</div>
+
+  <div class="settings">
+    <h3>⚙️ WebDAV 同步设置（坚果云）</h3>
+    <input type="email" id="webdavUser" placeholder="坚果云注册邮箱（如 your@email.com）" />
+    <input type="password" id="webdavPass" placeholder="WebDAV 密码（见下方说明）" />
+    <div class="guide">
+      🔑 <strong>如何获取 WebDAV 密码？</strong><br>
+      1. 登录 <a href="https://www.jianguoyun.com/" target="_blank">坚果云官网</a><br>
+      2. 进入「账户设置」→「安全」→「WebDAV 密码」→ 生成或查看密码
+    </div>
+  </div>
+
+  <script>
+    // 配置
+    const WEBDAV_URL = 'https://dav.jianguoyun.com/dav/flomo-notes.json';
+    const LOCAL_KEY = 'flomo_notes';
+    const LAST_SYNC_KEY = 'flomo_last_sync';
+
+    const noteInput = document.getElementById('noteInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const syncBtn = document.getElementById('syncBtn');
+    const loadBtn = document.getElementById('loadBtn');
+    const statusDiv = document.getElementById('status');
+    const userField = document.getElementById('webdavUser');
+    const passField = document.getElementById('webdavPass');
+
+    // 初始化：加载本地笔记
+    function loadLocalNotes() {
+      const saved = localStorage.getItem(LOCAL_KEY);
+      noteInput.value = saved || '';
+    }
+
+    // 保存到本地
+    saveBtn.addEventListener('click', () => {
+      localStorage.setItem(LOCAL_KEY, noteInput.value);
+      localStorage.setItem(LAST_SYNC_KEY, '0'); // 标记为未同步
+      updateStatus('✅ 已保存到本地（未同步）');
+    });
+
+    // 更新状态显示
+    function updateStatus(msg) {
+      statusDiv.textContent = msg;
+    }
+
+    // 获取用户凭证
+    function getCredentials() {
+      const user = userField.value.trim();
+      const pass = passField.value.trim();
+      if (!user || !pass) {
+        throw new Error('请填写邮箱和 WebDAV 密码');
+      }
+      return { user, pass };
+    }
+
+    // WebDAV 请求封装
+    async function webdavRequest(method, url, data = null) {
+      const { user, pass } = getCredentials();
+      const auth = 'Basic ' + btoa(user + ':' + pass);
+
+      const headers = {
+        'Authorization': auth,
+        'Content-Type': 'application/json; charset=utf-8'
+      };
+
+      const config = {
+        method,
+        headers
+      };
+
+      if (data) {
+        config.body = JSON.stringify(data);
+      }
+
+      const res = await fetch(url, config);
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('WebDAV 密码错误或权限不足');
+        } else if (res.status === 404 && method === 'GET') {
+          throw new Error('云端无笔记数据（首次同步请先上传）');
+        } else {
+          throw new Error(`WebDAV 错误: ${res.status} ${res.statusText}`);
+        }
+      }
+      return res;
+    }
+
+    // 上传笔记到坚果云
+    syncBtn.addEventListener('click', async () => {
+      try {
+        const notes = noteInput.value;
+        const payload = {
+          content: notes,
+          timestamp: Date.now()
+        };
+
+        await webdavRequest('PUT', WEBDAV_URL, payload);
+        localStorage.setItem(LOCAL_KEY, notes);
+        localStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
+        updateStatus('✅ 已同步到坚果云！');
+      } catch (err) {
+        console.error(err);
+        updateStatus('❌ 同步失败: ' + err.message);
+      }
+    });
+
+    // 从坚果云下载笔记
+    loadBtn.addEventListener('click', async () => {
+      try {
+        const res = await webdavRequest('GET', WEBDAV_URL);
+        const data = await res.json();
+        noteInput.value = data.content || '';
+        localStorage.setItem(LOCAL_KEY, data.content || '');
+        localStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
+        updateStatus('✅ 已从坚果云加载笔记');
+      } catch (err) {
+        console.error(err);
+        updateStatus('❌ 加载失败: ' + err.message);
+      }
+    });
+
+    // 页面加载时恢复本地内容
+    loadLocalNotes();
+
+    // 自动填充已保存的账号（可选）
+    const savedUser = localStorage.getItem('webdav_user');
+    if (savedUser) userField.value = savedUser;
+    userField.addEventListener('blur', () => {
+      localStorage.setItem('webdav_user', userField.value.trim());
+    });
+  </script>
+</body>
+</html>
