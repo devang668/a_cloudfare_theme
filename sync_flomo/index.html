@@ -29,46 +29,37 @@
 
   <script>
     // 👇 替换为你的 Cloudflare Worker URL！
-    const WORKER_URL = 'https://jianguo.devang.top';
+// ✅ 正确的前端调用方式
+const WORKER_URL = 'https://jianguo.devang.top'; // 你的自定义域名或 workers.dev 地址
 
-    function setStatus(msg) {
-      document.getElementById('status').innerText = msg;
+async function callWebDAV(method, fileName, data = null) {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  if (!email || !password) throw new Error('请填写邮箱和密码');
+
+  const auth = 'Basic ' + btoa(email + ':' + password);
+  // 👇 注意：这里只传文件名，如 'flomo-notes.json'
+  const url = `${WORKER_URL}/${encodeURIComponent(fileName)}`;
+
+  const options = {
+    method,
+    headers: {
+      'Authorization': auth,
+      'Content-Type': 'application/json; charset=utf-8'
     }
+  };
 
-    function saveLocal() {
-      localStorage.setItem('flomo_note', document.getElementById('note').value);
-      setStatus('✅ 已保存到本地');
-    }
+  if (data) options.body = JSON.stringify(data);
 
-    async function callWebDAV(method, filePath, data = null) {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      if (!email || !password) throw new Error('请填写邮箱和 WebDAV 密码');
-
-      const auth = 'Basic ' + btoa(email + ':' + password);
-      const url = `${WORKER_URL}/dav.jianguoyun.com/dav/${encodeURIComponent(filePath)}`;
-
-      const options = {
-        method,
-        headers: {
-          'Authorization': auth,
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-
-      if (data) {
-        options.body = JSON.stringify(data);
-      }
-
-      const res = await fetch(url, options);
-      if (!res.ok) {
-        let msg = `HTTP ${res.status}`;
-        if (res.status === 401) msg = '❌ WebDAV 密码错误或权限不足';
-        else if (res.status === 404 && method === 'GET') msg = '云端无笔记（请先同步上传）';
-        throw new Error(msg);
-      }
-      return res;
-    }
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    if (res.status === 401) msg = 'WebDAV 密码错误';
+    else if (res.status === 404 && method === 'GET') msg = '云端无数据';
+    throw new Error(msg);
+  }
+  return res;
+}
 
     async function syncToCloud() {
       try {
