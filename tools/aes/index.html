@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地密码加密工具 (AES-256) - CDN 测试版</title>
+    <style>
+        /* 样式代码与之前提供的版本保持一致，确保美观简洁和移动端兼容 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        textarea, input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            resize: vertical;
+        }
+        textarea {
+            min-height: 120px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+        }
+        #encryptButton {
+            background-color: #28a745;
+            color: white;
+        }
+        #encryptButton:hover {
+            background-color: #218838;
+        }
+        #decryptButton {
+            background-color: #007bff;
+            color: white;
+        }
+        #decryptButton:hover {
+            background-color: #0056b3;
+        }
+        #encryptedOutput {
+            background-color: #e9ecef;
+            border: 1px dashed #ced4da;
+            padding: 15px;
+            word-break: break-all;
+            min-height: 50px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .warning {
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .note {
+            margin-top: 15px;
+            color: #6c757d;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+            button {
+                padding: 15px;
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>本地 AES-256 密码加密工具</h1>
+
+    <div class="warning">
+        **注意：本版本通过 CDN 加载加密库，需要网络连接。数据加密仍在本地完成，不会上传到服务器**。
+    </div>
+
+    <label for="masterKey">您的易记密钥(例如: iloveyou)：</label>
+    <input type="password" id="masterKey" placeholder="输入您的密钥">
+
+    <hr>
+
+    <h2>加密</h2>
+    <label for="originalPassword">您要备份的**原始密码/文本** (可含空格、符号)：</label>
+    <textarea id="originalPassword" placeholder="输入您需要加密的原始密码，例如：MySecureP@sswOrd! #12345"></textarea>
+
+    <button id="encryptButton">🔒 加密</button>
+
+    <label for="encryptedOutput">加密结果 (Base64格式，可备份/分享)：</label>
+    <div id="encryptedOutput"></div>
+    <button id="copyEncrypted" onclick="copyToClipboard('encryptedOutput')">复制密文</button>
+
+    <hr>
+
+    <h2>解密</h2>
+    <label for="encryptedInput">要解密的**密文**：</label>
+    <textarea id="encryptedInput" placeholder="粘贴您备份的加密字符串"></textarea>
+
+    <button id="decryptButton">🔓 解密</button>
+
+    <label for="decryptedOutput">解密结果：</label>
+    <div id="decryptedOutput" style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; min-height: 50px; border-radius: 6px; font-weight: bold; color: #0c5460;"></div>
+    
+    <p class="note">
+        如果您需要**离线使用**，请联系我获取**完全自包含**版本，您需要手动嵌入加密库代码。
+    </p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" integrity="sha512-a+SUDuwNzXDvz4XrIcXHuCf089/iJAoN4lmrXJg18XnduKK6YlDHNRalv4yd1N40OKI80tFidF+rqTFKGPoWFQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+/* -------------------------------------------------------------
+ * 自定义加密/解密逻辑
+ * ------------------------------------------------------------- */
+
+function encryptPassword() {
+    // 检查 CryptoJS 是否被成功加载
+    if (typeof CryptoJS === 'undefined' || typeof CryptoJS.AES === 'undefined') {
+        document.getElementById('encryptedOutput').innerText = "错误：加密库未加载。请检查您的网络连接。";
+        return;
+    }
+
+    const key = document.getElementById('masterKey').value;
+    const plaintext = document.getElementById('originalPassword').value;
+    const outputDiv = document.getElementById('encryptedOutput');
+
+    if (!key || !plaintext) {
+        outputDiv.innerText = '错误：密钥和原始密码/文本都不能为空！';
+        return;
+    }
+
+    try {
+        const encrypted = CryptoJS.AES.encrypt(
+            plaintext,
+            key,
+            {
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            }
+        );
+        outputDiv.innerText = encrypted.toString();
+    } catch (e) {
+        outputDiv.innerText = '加密失败：' + e.message;
+        console.error(e);
+    }
+}
+
+function decryptPassword() {
+    // 检查 CryptoJS 是否被成功加载
+    if (typeof CryptoJS === 'undefined' || typeof CryptoJS.AES === 'undefined') {
+        document.getElementById('decryptedOutput').innerText = "错误：加密库未加载。请检查您的网络连接。";
+        return;
+    }
+
+    const key = document.getElementById('masterKey').value;
+    const ciphertext = document.getElementById('encryptedInput').value;
+    const outputDiv = document.getElementById('decryptedOutput');
+
+    if (!key || !ciphertext) {
+        outputDiv.innerText = '错误：密钥和密文都不能为空！';
+        return;
+    }
+
+    try {
+        const decrypted = CryptoJS.AES.decrypt(ciphertext, key);
+        const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+
+        if (plaintext) {
+            outputDiv.innerText = plaintext;
+        } else {
+            outputDiv.innerText = '解密失败！请检查您的密钥是否正确，或密文是否完整无误。';
+        }
+    } catch (e) {
+        outputDiv.innerText = '解密失败：' + e.message;
+        console.error(e);
+    }
+}
+
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element.innerText) {
+        alert("没有可复制的内容。");
+        return;
+    }
+
+    const text = element.innerText;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('已成功复制到剪贴板！');
+        }, (err) => {
+            alert('无法复制：' + err);
+        });
+    } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('已成功复制到剪贴板！');
+        } catch (err) {
+            alert('复制失败。请手动复制内容。');
+        }
+        document.body.removeChild(textarea);
+    }
+}
+
+
+// 绑定事件
+document.getElementById('encryptButton').addEventListener('click', encryptPassword);
+document.getElementById('decryptButton').addEventListener('click', decryptPassword);
+
+</script>
+
+</body>
+</html>
